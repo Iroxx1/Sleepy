@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from cpap_parser import setting_names
 from cpap_parser.channels import AHI_EVENTS, EVENTS
-from cpap_parser.resmed.labels import SETTING_NAMES
 
 from ..analysis import insights as ins
 from ..analysis.metrics import metric_info
@@ -252,7 +252,7 @@ def night_detail(night_id: int, user: User = Depends(current_user), db: Session 
         )
     settings_out = []
     for k, v in sorted((n.settings or {}).items()):
-        settings_out.append({"key": k, "label": SETTING_NAMES.get(k, k), "value": v})
+        settings_out.append({"key": k, "label": setting_names().get(k, k), "value": v})
     return {
         "night": {
             **row,

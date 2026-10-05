@@ -255,8 +255,9 @@ class Runner:
         if not root_parser:
             sample = ", ".join(sorted({r.split("/")[0] for r in rels})[:8])
             raise ImportAbort(
-                "Keine bekannten CPAP-Daten erkannt. Erwartet wird der Inhalt der SD-Karte "
-                "(z. B. STR.edf, Identification.tgt/.json und der Ordner DATALOG). "
+                "Keine bekannten CPAP-Daten erkannt. Erwartet wird der komplette Inhalt der SD-Karte – "
+                "ResMed: STR.edf, Identification.tgt/.json und der Ordner DATALOG; "
+                "Löwenstein prisma: config.pscfg und der Ordner mit der Seriennummer. "
                 f"Gefunden: {sample}"
             )
         roots_sorted = sorted(root_parser, key=len, reverse=True)

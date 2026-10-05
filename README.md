@@ -1,6 +1,6 @@
 # Sleepy – self-hosted CPAP-Datenanalyse
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue) ![Python](https://img.shields.io/badge/python-3.11%2B-blue) ![Self-hosted](https://img.shields.io/badge/self--hosted-100%25%20lokal-green)
+![Version](https://img.shields.io/badge/version-1.3.0-blue) ![Python](https://img.shields.io/badge/python-3.11%2B-blue) ![Self-hosted](https://img.shields.io/badge/self--hosted-100%25%20lokal-green)
 
 Sleepy ist eine vollständig lokal laufende Webanwendung, die die SD-Karten-Daten von PAP-Geräten importiert, unverändert archiviert, normalisiert und – ähnlich SleepHQ/OSCAR – detailliert auswertet: Nachtanalyse mit hochaufgelöstem Flow, synchronisierten Diagrammen und Ereignisnavigation, Kalender, Langzeittrends, Vergleiche, Berichte und Export.
 
@@ -27,12 +27,13 @@ Sleepy ist eine vollständig lokal laufende Webanwendung, die die SD-Karten-Date
 | Sicherheit | Login (Argon2id), serverseitige Sessions, CSRF, Rate Limiting, optionale TOTP-2FA, mehrere Benutzer mit Datentrennung, Admin-Rolle, Audit-Log, CSP & Sicherheitsheader, keine Telemetrie/CDNs/Webfonts |
 | Betrieb | `install.sh` für Debian-LXC, `update.sh`, Backup/Restore (inkl. täglichem Timer), Healthcheck, Diagnose, Logging, OpenAPI/Swagger offline, optional Docker/Podman |
 
-**Unterstützte Geräte:** ResMed S9, AirSense/AirCurve 10, AirSense/AirCurve 11 (EDF/EDF+). Philips-Karten werden erkannt und archiviert, aber (noch) nicht ausgewertet. Details und offene Punkte: [docs/RESEARCH.md](docs/RESEARCH.md).
+**Unterstützte Geräte:** ResMed S9, AirSense/AirCurve 10, AirSense/AirCurve 11 (EDF/EDF+) sowie **Löwenstein prisma SMART / prisma SOFT** (WMEDF + XML; einfach den kompletten Inhalt der SD-Karte als ZIP hochladen). Philips-Karten und Löwenstein prisma LINE werden erkannt und archiviert, aber (noch) nicht ausgewertet. Details und offene Punkte: [docs/RESEARCH.md](docs/RESEARCH.md).
 
 ## Ehrlicher Stand / Einschränkungen
 
 * Der ResMed-Parser wurde mit **synthetischen** Dateien entwickelt, die die dokumentierte Struktur nachbilden. Eine Prüfung mit einer echten SD-Karte steht aus – Anleitung: [docs/VALIDATION.md](docs/VALIDATION.md). Wichtigste offene Annahme: Lage der ResMed-Ereignismarkierung (Ende des Ereignisses).
-* Nicht implementiert: eigene Ereigniserkennung aus dem Flow, Atemzug-für-Atemzug-Analyse, Import externer Oximeter/Wearables, Philips-/Löwenstein-Parser, Unterpfad-Betrieb hinter Reverse Proxy.
+* Nicht implementiert: eigene Ereigniserkennung aus dem Flow, Atemzug-für-Atemzug-Analyse, Import externer Oximeter/Wearables, Philips-Parser, prisma LINE, Unterpfad-Betrieb hinter Reverse Proxy.
+* Löwenstein prisma: an einer echten prisma-SMART-Karte geprüft. Die Langzeitstatistik (`statistic.psstat`) und einige nicht dokumentierte Ereigniscodes werden nur archiviert, nicht ausgewertet – Details in [docs/RESEARCH.md](docs/RESEARCH.md#3b-löwenstein-prisma-smart--prisma-soft).
 * ODI und Entsättigungen sind ein vereinfachter, nicht klinisch validierter Algorithmus.
 * Firmware ist bei AirSense 10 nicht eindeutig aus den Dateien ablesbar und wird dann als „nicht ermittelbar“ angezeigt.
 
@@ -99,7 +100,7 @@ Einfach immer die komplette Karte importieren: bekannte Dateien werden erkannt, 
 * [docs/ANDROID.md](docs/ANDROID.md) – Android-App: Installation, Verbindung, Pinch-Zoom, Bauen, Signatur
 
 ```
-parser/    cpap_parser – EDF/EDF+, ResMed-Parser, Testdaten-Generator
+parser/    cpap_parser – EDF/EDF+, ResMed- und Löwenstein-prisma-Parser, Testdaten-Generatoren
 backend/   sleepy – FastAPI, Datenmodell, Import, Analyse, Reports, CLI
 frontend/  React/TypeScript/Vite/ECharts (src = Web, mobile = Handy-UI, android = Capacitor-Projekt)
 tests/     pytest (Parser, Import, Duplikate, DB, API, Auth, Charts, Statistik, Backup)

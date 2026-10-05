@@ -115,7 +115,7 @@ function DeviceCard({ d }: { d: Device }) {
                     {p.changes.length
                       ? p.changes.map((c) => `${c.label}: ${c.from ?? "–"} → ${c.to ?? "–"}`).join(" · ")
                       : Object.entries(p.settings)
-                          .filter(([k]) => ["mode_name", "S.AS.MinPress", "S.AS.MaxPress", "S.C.Press", "S.EPR.Level", "S.HumLevel"].includes(k))
+                          .filter(([k]) => ["mode_name", "S.AS.MinPress", "S.AS.MaxPress", "S.C.Press", "S.EPR.Level", "S.HumLevel", "Prisma.Pressure", "Prisma.PressureMax", "Prisma.SoftPAP", "Prisma.HumidLevel"].includes(k))
                           .map(([k, v]) => `${h.data!.labels[k] ?? (k === "mode_name" ? "Modus" : k)}: ${v}`)
                           .join(" · ") || "Erste Einstellungen"}
                   </td>

@@ -27,6 +27,12 @@ Eine **vollständige Kopie der SD-Karte** (am einfachsten als ZIP):
 5. **Unbekannte Kanäle/Annotationen:** Werden generisch übernommen (`x_…` bzw. Ereignistyp „Sonstiges“) und im Protokoll gemeldet. Diese Labels bitte melden, damit sie sauber zugeordnet werden.
 6. **Einstellungen:** Modus, Min/Max-Druck, EPR-Stufe mit dem Gerätemenü vergleichen.
 
+## Löwenstein prisma
+
+Der prisma-Parser wurde an einer **echten prisma-SMART-Karte** (Firmware 3.7) entwickelt: Dateistruktur, Sample-Breiten, Startzeiten und die Lage der Ereignisse (Ende = `EndTime`, Beginn = `EndTime − Duration`) wurden am Flow-Signal geprüft. Die Daten selbst sind nicht im Repository; Tests verwenden `cpap_parser.testing.synthetic_prisma`.
+
+Noch mit dem Gerät/der Hersteller-Software abzugleichen: Nutzungsdauer und AHI einiger Nächte (prisma berechnet den AHI selbst; Sleepy berechnet ihn aus den Ereignissen), Befeuchterstufe und softPAP-Stufe.
+
 ## Was bei Abweichungen hilft
 
 ```bash

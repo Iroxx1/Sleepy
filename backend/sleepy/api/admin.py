@@ -146,8 +146,9 @@ def delete_device(
 @router.get("/devices/{device_id}/settings-history")
 def settings_history(device_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Periods with identical device settings (changes over time)."""
-    from cpap_parser.resmed.labels import SETTING_NAMES
+    from cpap_parser import setting_names
 
+    names = setting_names()
     d = _device(db, user, device_id)
     periods: list[dict] = []
     for n in db.scalars(select(Night).where(Night.device_id == d.id).order_by(Night.date)):
@@ -163,10 +164,10 @@ def settings_history(device_id: int, user: User = Depends(current_user), db: Ses
                 prev = periods[-1]["settings"]
                 for k in sorted(set(prev) | set(s)):
                     if prev.get(k) != s.get(k):
-                        changes.append({"key": k, "label": SETTING_NAMES.get(k, k), "from": prev.get(k), "to": s.get(k)})
+                        changes.append({"key": k, "label": names.get(k, k), "from": prev.get(k), "to": s.get(k)})
             periods.append({"from": n.date.isoformat(), "to": n.date.isoformat(), "nights": 1, "settings": s,
                             "changes": changes})
-    return {"labels": SETTING_NAMES, "periods": periods}
+    return {"labels": names, "periods": periods}
 
 
 # ------------------------------------------------------------------- users

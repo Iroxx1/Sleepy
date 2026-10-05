@@ -7,7 +7,7 @@ Importing this package registers all available parsers::
     parser, detection = detect(fs)
 """
 
-from . import philips, resmed  # noqa: F401  (registration side effect)
+from . import loewenstein, philips, resmed  # noqa: F401  (registration side effect)
 from .base import (
     CPAPParser,
     Detection,
@@ -17,6 +17,7 @@ from .base import (
     detect,
     get_parser,
     parsers,
+    setting_names,
 )
 from .model import (
     DeviceInfo,
@@ -47,5 +48,6 @@ __all__ = [
     "from_wall_ms",
     "get_parser",
     "parsers",
+    "setting_names",
     "wall_ms",
 ]

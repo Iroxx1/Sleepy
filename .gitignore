@@ -28,6 +28,11 @@ data/
 sdcard/
 *.edf
 *.edf.gz
+*.wmedf
+*.pscfg
+*.psstat
+*.pcfg
+*.pdat
 *.zip
 backups/
 

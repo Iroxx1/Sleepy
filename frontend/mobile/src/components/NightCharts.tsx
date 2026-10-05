@@ -27,6 +27,7 @@ const PANELS: Panel[] = [
   { id: "pressure", title: "Druck (cmH2O)", channels: ["pressure", "ipap", "epap"], height: 130, dec: 1 },
   { id: "leak", title: "Leckage (L/min)", channels: ["leak"], height: 110, yMin: 0, dec: 1 },
   { id: "flow_limit", title: "Flusslimitierung", channels: ["flow_limit"], height: 95, yMin: 0, dec: 2 },
+  { id: "obstruct_level", title: "Obstruktionsgrad (%)", channels: ["obstruct_level"], height: 95, yMin: 0, dec: 0 },
   { id: "resp_rate", title: "Atemfrequenz (/min)", channels: ["resp_rate"], height: 95, dec: 1 },
   { id: "tidal_volume", title: "Atemzugvolumen (mL)", channels: ["tidal_volume"], height: 95, dec: 0 },
   { id: "minute_vent", title: "Minutenvolumen (L/min)", channels: ["minute_vent"], height: 95, dec: 1 },
@@ -239,7 +240,8 @@ export default function NightCharts({ nightId, channels, events, types, startMs,
 
   const lanes = useMemo(() => {
     const order = ["OA", "CA", "UA", "H", "RERA", "CSR", "DESAT", "OTHER"];
-    return [...new Set(events.map((e) => e.code))].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const rank = (c: string) => (order.includes(c) ? order.indexOf(c) : order.length);
+    return [...new Set(events.map((e) => e.code))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   }, [events]);
 
   const eventsOption = {

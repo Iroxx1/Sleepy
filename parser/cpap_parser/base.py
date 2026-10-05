@@ -95,6 +95,8 @@ class CPAPParser(ABC):
     manufacturer: str = ""
     #: bump whenever interpretation changes so nights can be re-processed
     version: str = "1"
+    #: display names of the keys this parser writes into ``ParsedNight.settings``
+    setting_names: dict[str, str] = {}
 
     @abstractmethod
     def detect(self, files: FileSet) -> Detection | None:
@@ -142,6 +144,14 @@ def get_parser(name: str) -> CPAPParser:
         if p.name == name:
             return p
     raise KeyError(name)
+
+
+def setting_names() -> dict[str, str]:
+    """Display names of device setting keys of all parsers."""
+    out: dict[str, str] = {"mode_name": "Modus", "mode_kind": "Modus (Typ)"}
+    for p in _REGISTRY:
+        out.update(p.setting_names)
+    return out
 
 
 def detect(files: FileSet | Mapping[str, Path]) -> tuple[CPAPParser, Detection] | None:

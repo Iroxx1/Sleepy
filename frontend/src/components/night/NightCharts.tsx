@@ -30,6 +30,7 @@ const BASE_PANELS: PanelDef[] = [
   { id: "pressure", title: "Druck (cmH2O)", channels: ["pressure", "ipap", "epap", "mask_pressure"], optional: ["mask_pressure_hi"], height: 150, decimals: 1 },
   { id: "leak", title: "Leckage (L/min)", channels: ["leak"], height: 120, yMin: 0, decimals: 1 },
   { id: "flow_limit", title: "Flusslimitierung", channels: ["flow_limit"], height: 100, yMin: 0, decimals: 2 },
+  { id: "obstruct_level", title: "Obstruktionsgrad (%)", channels: ["obstruct_level"], height: 100, yMin: 0, decimals: 0 },
   { id: "snore", title: "Schnarchen", channels: ["snore"], height: 90, yMin: 0, decimals: 2 },
   { id: "resp_rate", title: "Atemfrequenz (/min)", channels: ["resp_rate"], height: 100, decimals: 1 },
   { id: "tidal_volume", title: "Atemzugvolumen (mL)", channels: ["tidal_volume"], height: 100, decimals: 0 },

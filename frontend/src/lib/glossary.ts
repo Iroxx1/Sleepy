@@ -30,6 +30,11 @@ export const GLOSSARY: GlossaryEntry[] = [
   { group: "Ereignisse", term: "FL", long: "Flusslimitierung", text: "Abgeflachte Einatemkurve als Zeichen eines teilweise verengten Atemwegs. ResMed liefert einen Index von 0 (keine) bis 1 (stark)." },
   { group: "Ereignisse", term: "VS", long: "Vibratory Snore", text: "Vibrationsschnarchen (bei manchen Herstellern als Ereignis)." },
   { group: "Ereignisse", term: "LL", long: "Large Leak", text: "Große Leckage (Zeiträume mit Leckage über der Schwelle)." },
+  { group: "Ereignisse", term: "AR", long: "Artefakt (Löwenstein)", text: "Unregelmäßigkeit im Messsignal, die das Gerät nicht als Atemereignis wertet (z. B. Schlucken, Husten, Sprechen)." },
+  { group: "Ereignisse", term: "TB", long: "Timed Breath (Löwenstein)", text: "Vom Gerät ausgelöster Atemzug (Machine Initiated Breath)." },
+  { group: "Ereignisse", term: "eSO / eMO", long: "Obstruktions-Epochen (Löwenstein)", text: "Das prisma-Gerät bewertet die Nacht in 2-Minuten-Abschnitten (Epochen). eSO = Epoche mit schwerer, eMO = mit leichter Obstruktion. Das sind Gerätebewertungen, keine Einzelereignisse; sie zählen nicht zum AHI." },
+  { group: "Ereignisse", term: "eFL / eS / ePB", long: "Weitere Epochen (Löwenstein)", text: "2-Minuten-Epochen mit Flusslimitierung (eFL), Schnarchen (eS) oder periodischer Atmung (ePB). Zählen nicht zum AHI." },
+  { group: "Ereignisse", term: "TS", long: "Tiefschlaf-Epoche (Löwenstein)", text: "Abschnitt mit sehr gleichmäßiger Atmung, den das Gerät als Tiefschlaf einschätzt. Reine Geräteschätzung, keine Schlafstadien-Messung." },
   // ---- Druck & Geräte
   { group: "Druck & Therapie", term: "CPAP", long: "Continuous Positive Airway Pressure", text: "Therapie mit konstantem Überdruck." },
   { group: "Druck & Therapie", term: "APAP", long: "Automatic PAP (AutoSet)", text: "Das Gerät passt den Druck innerhalb eines Bereichs (Min/Max) automatisch an." },
@@ -38,6 +43,9 @@ export const GLOSSARY: GlossaryEntry[] = [
   { group: "Druck & Therapie", term: "IPAP", long: "Inspiratory Positive Airway Pressure", text: "Druck während der Einatmung." },
   { group: "Druck & Therapie", term: "EPAP", long: "Expiratory Positive Airway Pressure", text: "Druck während der Ausatmung. Bei ResMed-CPAP/APAP mit EPR ist das der abgesenkte Ausatemdruck." },
   { group: "Druck & Therapie", term: "EPR", long: "Expiratory Pressure Relief", text: "ResMed-Komfortfunktion: Druckabsenkung beim Ausatmen um 1–3 cmH2O (Stufe)." },
+  { group: "Druck & Therapie", term: "softPAP", long: "Löwenstein-Komfortfunktion", text: "Druckabsenkung beim Ausatmen bei Löwenstein-Geräten (Aus / Leicht / Standard). Entspricht in etwa EPR bei ResMed." },
+  { group: "Druck & Therapie", term: "hPa", long: "Hektopascal", text: "Druckeinheit der Löwenstein-Geräte. 1 hPa ≈ 1,02 cmH2O. Sleepy rechnet Druck-Signale einheitlich in cmH2O um; Geräteeinstellungen werden in hPa angezeigt, wie am Gerät." },
+  { group: "Druck & Therapie", term: "PMaxOA", long: "Druckgrenze bei obstruktiven Apnoen (Löwenstein)", text: "Höchster Druck, bis zu dem das prisma-Gerät bei obstruktiven Apnoen den Druck anhebt (Geräteeinstellung)." },
   { group: "Druck & Therapie", term: "cmH2O", long: "Zentimeter Wassersäule", text: "Einheit für den Therapiedruck." },
   { group: "Druck & Therapie", term: "Maskendruck", long: "", text: "Gemessener Druck an der Maske (hochaufgelöst 25 Hz bzw. 0,5 Hz)." },
   { group: "Druck & Therapie", term: "Rampe", long: "", text: "Langsamer Druckanstieg zu Beginn der Therapie (Rampenzeit in Minuten)." },
@@ -47,6 +55,9 @@ export const GLOSSARY: GlossaryEntry[] = [
   { group: "Atmung & Signale", term: "Atemfrequenz", long: "Respiratory Rate", text: "Atemzüge pro Minute." },
   { group: "Atmung & Signale", term: "Atemzugvolumen", long: "Tidal Volume (Vt)", text: "Luftmenge pro Atemzug in mL." },
   { group: "Atmung & Signale", term: "Atemminutenvolumen", long: "Minute Ventilation (MV)", text: "Luftmenge pro Minute in L/min (≈ Atemfrequenz × Atemzugvolumen)." },
+  { group: "Atmung & Signale", term: "Obstruktionsgrad", long: "ObstructLevel (Löwenstein)", text: "Vom prisma-Gerät geschätzter Grad der Atemwegsverengung in Prozent. Gerätewert, Berechnungsweise nicht offengelegt." },
+  { group: "Atmung & Signale", term: "rRMV", long: "Relatives Atemminutenvolumen (Löwenstein)", text: "Atemminutenvolumen im Verhältnis zum gleitenden Mittelwert des Geräts, in Prozent (100 % = übliches Niveau)." },
+  { group: "Atmung & Signale", term: "Gesamtfluss", long: "FlowFull (Löwenstein)", text: "Zweites Fluss-Signal des prisma-Geräts (Bezeichnung „FlowFull“). Die genaue Definition ist nicht dokumentiert; es wird nur als zusätzliches Diagramm angeboten und nicht ausgewertet." },
   { group: "Atmung & Signale", term: "Schnarchen", long: "Snore", text: "Schnarch-Index des Geräts (relative Größe, keine Lautstärke in dB)." },
   { group: "Atmung & Signale", term: "SpO2", long: "Sauerstoffsättigung", text: "Sauerstoffsättigung des Blutes in % – nur mit angeschlossenem Pulsoximeter." },
   { group: "Atmung & Signale", term: "Puls", long: "Herzfrequenz", text: "Schläge pro Minute – nur mit Pulsoximeter." },
@@ -64,6 +75,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   { group: "Sleepy", term: "Status-Ampel", long: "", text: "Grün/Gelb/Rot im Kalender nach deinen Schwellenwerten (Einstellungen → Schwellenwerte). Keine medizinische Bewertung." },
   { group: "Sleepy", term: "STR.edf", long: "", text: "ResMed-Datei mit einer Tageszusammenfassung pro Therapietag (Kennzahlen und Einstellungen)." },
   { group: "Sleepy", term: "BRP / PLD / SAD / EVE / CSL", long: "ResMed-Dateitypen", text: "BRP: Flow und Maskendruck (25 Hz) · PLD: Druck, Leckage, Atemparameter (alle 2 s) · SAD: SpO2/Puls · EVE: Ereignisse · CSL: Cheyne-Stokes-Zeiträume." },
+  { group: "Sleepy", term: "WMEDF / event.xml", long: "Löwenstein-prisma-Dateien", text: "Pro Maskensitzung eine Signaldatei (signal_<Nr>.wmedf, EDF-Variante mit 8/16-Bit-Kanälen) und eine Ereignisdatei (event_<Nr>.xml mit Einstellungen und Atemereignissen). config.pscfg enthält Gerätekennung und Seriennummer." },
 ];
 
 const BY_TERM = new Map<string, GlossaryEntry>();

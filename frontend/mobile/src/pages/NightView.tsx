@@ -7,6 +7,8 @@ import { Disclaimer, Dot, ErrorMsg, Section, Spinner, Tile } from "../components
 import NightCharts from "../components/NightCharts";
 import { clock, dateDe, hm, num, weekday } from "../../../src/lib/format";
 
+const MINOR_EVENTS = new Set(["VS", "EPOCH_SO", "EPOCH_MO", "EPOCH_FL", "EPOCH_SN", "EPOCH_PB", "DEEP", "ARTIFACT", "TB"]);
+
 export default function NightView() {
   const { id } = useParams();
   const nightId = Number(id);
@@ -14,6 +16,7 @@ export default function NightView() {
   const [focus, setFocus] = useState<{ start: number; end: number; key: number } | null>(null);
   const [sel, setSel] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [allEvents, setAllEvents] = useState(false);
   const nq = useQuery({ queryKey: ["m-night", nightId], queryFn: () => api.get<NightDetail>(`/api/nights/${nightId}`) });
   const eq = useQuery({ queryKey: ["m-night-ev", nightId], queryFn: () => api.get<EventsResponse>(`/api/nights/${nightId}/events`) });
   const iq = useQuery({ queryKey: ["m-night-ins", nightId], queryFn: () => api.get<Insights>(`/api/nights/${nightId}/insights`) });
@@ -33,6 +36,8 @@ export default function NightView() {
   const n = d.night;
   const v = (k: string) => m[k]?.value ?? null;
   const evs = eq.data?.items || [];
+  // Snoring and the device's 2-minute epochs are numerous; the list shows them on request only
+  const listEvs = allEvents ? evs : evs.filter((e) => !MINOR_EVENTS.has(e.code));
   const types = eq.data?.types || {};
 
   return (
@@ -91,10 +96,15 @@ export default function NightView() {
         <Section title="Diagramme"><p className="muted">Für diese Nacht liegen nur Zusammenfassungswerte vor.</p></Section>
       )}
 
-      <Section title={`Ereignisse (${evs.length})`}>
+      <Section title={`Ereignisse (${listEvs.length})`}>
         {evs.length === 0 && <p className="muted">Keine Ereignisse aufgezeichnet.</p>}
+        {evs.length > listEvs.length || allEvents ? (
+          <button className="m-link" onClick={() => setAllEvents(!allEvents)}>
+            {allEvents ? "nur Atemereignisse" : `auch Schnarchen/Epochen zeigen (+${evs.length - listEvs.length})`}
+          </button>
+        ) : null}
         <div className="m-list">
-          {evs.map((e) => (
+          {listEvs.map((e) => (
             <button key={e.id} className={`m-list-item ${sel === e.id ? "selected" : ""}`} onClick={() => select(e)}>
               <span className="ev-chip" style={{ background: types[e.code]?.color }}>{types[e.code]?.short ?? e.code}</span>
               <span className="mono">{clock(e.start_ms, true)}</span>

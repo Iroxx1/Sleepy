@@ -49,6 +49,7 @@ from .labels import (
     NON_EVENT_ANNOTATIONS,
     PLD_LABELS,
     SAD_LABELS,
+    SETTING_NAMES,
     match_event,
     match_label,
     unit_conversion,
@@ -92,6 +93,7 @@ class ResMedParser(CPAPParser):
     name = "resmed"
     manufacturer = "ResMed"
     version = "1.0"
+    setting_names = SETTING_NAMES
 
     # ------------------------------------------------------------------ detection
     def find_roots(self, rel_paths: Iterable[str]) -> list[str]:

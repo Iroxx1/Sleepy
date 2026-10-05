@@ -9,8 +9,10 @@ parser/cpap_parser/
 ├── base.py           CPAPParser-Basisklasse, FileSet, Registry, detect()
 ├── resmed/           ResMed (vollständig)
 │   ├── identification.py, str_file.py, labels.py, parser.py
+├── loewenstein/      Löwenstein prisma SMART/SOFT (WMEDF-Signale + event.xml)
+│   ├── wmedf.py, events.py, parser.py
 ├── philips.py        Philips (nur Erkennung, nicht unterstützt)
-└── testing/synthetic_resmed.py
+└── testing/synthetic_resmed.py, synthetic_prisma.py
 ```
 
 ## Vertrag eines Parsers

@@ -190,12 +190,12 @@ def read_header_bytes(path: str | Path, limit: int = 256 * 512) -> bytes:
         return fh.read(limit)
 
 
-def _parse_header(raw: bytes, path: str) -> tuple[EDFFile, int]:
+def _parse_header(raw: bytes, path: str, versions: tuple[str, ...] = ("0",)) -> tuple[EDFFile, int]:
     if len(raw) < HEADER_SIZE:
         raise EDFError("file too short for an EDF header")
     h = raw[:HEADER_SIZE]
     version = _ascii(h[0:8])
-    if version != "0":
+    if version not in versions:
         raise EDFError(f"unsupported EDF version field {version!r}")
     patient = _ascii(h[8:88])
     recording = _ascii(h[88:168])

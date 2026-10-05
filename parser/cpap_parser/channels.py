@@ -37,6 +37,11 @@ CHANNELS: dict[str, ChannelDef] = {
         ChannelDef("te", "Exspirationszeit", "s", "breathing"),
         ChannelDef("flow_limit", "Flusslimitierung", "", "flow_limit"),
         ChannelDef("snore", "Schnarchen", "", "snore"),
+        ChannelDef("pressure_measured", "Druck gemessen", "cmH2O", "pressure"),
+        ChannelDef("obstruct_level", "Obstruktionsgrad (Geräteschätzung)", "%", "flow_limit"),
+        ChannelDef("flow_full", "Gesamtfluss (FlowFull)", "L/min", "flow", summarise=False),
+        ChannelDef("rrmv", "Relatives Atemminutenvolumen (rRMV)", "%", "breathing"),
+        ChannelDef("rmv_fluctuation", "Schwankung des Atemminutenvolumens", "%", "breathing"),
         ChannelDef("spo2", "SpO2", "%", "oximetry"),
         ChannelDef("pulse", "Puls", "/min", "oximetry"),
     ]
@@ -71,6 +76,14 @@ EVENTS: dict[str, EventDef] = {
         EventDef("CSR", "Cheyne-Stokes-Atmung", "CSR", "#16a34a", span=True),
         EventDef("LL", "Große Leckage", "LL", "#dc2626", span=True),
         EventDef("DESAT", "SpO2-Entsättigung (Gerät)", "DS", "#e11d48"),
+        EventDef("ARTIFACT", "Artefakt (z. B. Schlucken, Husten, Sprechen)", "AR", "#94a3b8"),
+        EventDef("TB", "Gerätegetriggerter Atemzug", "TB", "#a16207"),
+        EventDef("EPOCH_SO", "2-Minuten-Epoche: schwere Obstruktion", "eSO", "#1d4ed8", span=True),
+        EventDef("EPOCH_MO", "2-Minuten-Epoche: leichte Obstruktion", "eMO", "#60a5fa", span=True),
+        EventDef("EPOCH_FL", "2-Minuten-Epoche: Flusslimitierung", "eFL", "#22d3ee", span=True),
+        EventDef("EPOCH_SN", "2-Minuten-Epoche: Schnarchen", "eS", "#84cc16", span=True),
+        EventDef("EPOCH_PB", "2-Minuten-Epoche: periodische Atmung", "ePB", "#14b8a6", span=True),
+        EventDef("DEEP", "Tiefschlaf-Epoche (Geräteschätzung)", "TS", "#6366f1", span=True),
         EventDef("OTHER", "Sonstiges Ereignis", "?", "#475569"),
     ]
 }

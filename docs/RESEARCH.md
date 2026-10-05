@@ -8,6 +8,7 @@ Stand: Oktober 2026. Diese Datei dokumentiert, **was aus welchen Quellen über d
 |---|---|---|
 | EDF/EDF+-Spezifikation (Kemp et al. 1992, Kemp & Olivan 2003, edfplus.info) | offen | Eigener Reader nach Spezifikation (`parser/cpap_parser/edf.py`) |
 | OSCAR – Open Source CPAP Analysis Reporter (`oscar/SleepLib/loader_plugins/resmed_loader.cpp`, `edfparser.cpp`, `resmed_EDFinfo.cpp`) | GPL-3.0 | **Nur technische Referenz** (Dateinamen, Signal-Labels, Einheiten, STR-Struktur, Modusnummern). Kein Code übernommen. |
+| OSCAR `prisma_loader.cpp/.h` (Löwenstein prisma) | GPL-3.0 | **Nur technische Referenz** für Fakten: Bedeutung der Ereignis-IDs (`RespEventID`), Parameter-IDs, Zeiteinheit 1/10 s, Sample-Breite `#1/#2` in WMEDF. Kein Code übernommen; alles an echten Dateien nachgeprüft (Abschnitt 3b). |
 | SleepHQ (Funktionsumfang, öffentlich sichtbare Oberfläche) | proprietär | Nur funktionales Vorbild, kein Code/kein Format |
 
 ## 2. Entscheidung OSCAR-Wiederverwendung
@@ -60,12 +61,45 @@ DATALOG/YYYYMMDD/         ein Ordner pro Therapietag (S9: Dateien direkt in DATA
 5. **I:E-Verhältnis** – OSCAR teilt durch 100; Sleepy zeigt den Rohwert mit dieser Kennzeichnung.
 6. **Leckage-Art** – ob `Leak.2s` unbeabsichtigte oder Gesamtleckage ist, wird nicht behauptet; Anzeige als „Leckage“ in Geräteeinheit.
 
+## 3b. Löwenstein prisma SMART / prisma SOFT
+
+```
+config.pscfg                         JSON: dev.sn (Seriennummer hexadezimal), devid (0x92 = prisma SMART,
+                                     0x91 = prisma SOFT), fwversion, hwversion
+statistic.psstat                     JSON mit numerischen Schlüsseln (Langzeitstatistik) – Bedeutung nicht
+                                     dokumentiert, wird nur archiviert
+Dcm/dcm.zip                          Kommunikationsmodul (nur archiviert)
+<SN dezimal, 10-stellig>/YYYYMMDD/   Therapietag, den das Gerät der Sitzung zuordnet
+    signal_<n>.wmedf                 Signale einer Maskensitzung
+    event_<n>.xml                    Einstellungen + Atemereignisse derselben Sitzung
+    trendCurves.tc                   binär, nicht dokumentiert (nur archiviert)
+<SN>/log/*.log                       Geräteprotokolle (nur archiviert)
+```
+
+### Fakten, die Sleepy verwendet (an einer echten prisma-SMART-Karte geprüft)
+
+* **WMEDF** = EDF-Header (Versionsfeld `1`), Datensatzdauer 1 s. Das *reserved*-Feld jedes Signals gibt die Sample-Breite an: `#1` = 8 Bit (vorzeichenlos, wenn digitales Minimum ≥ 0), `#2` = 16 Bit. Dateigröße = Header + Datensätze × Summe der Bytes – geprüft für alle Dateien der Karte.
+* Startzeit im EDF-Header ist Ortszeit (passt zur Unix-Zeit im XML-Kommentar `started …` plus Zeitzone).
+* Signale (Label → Sleepy): `RespFlow` → Flow (L/min, 5 Hz), `LeakFlowBreath` → Leckage (L/min), `CPAPPressure` → Druck (Soll), `Pressure` → Maskendruck, `PressureMeasured`, `ObstructLevel` (%), `FlowFull`, `rRMV`, `IPAP`/`EPAP` (bei CPAP/APAP identisch mit `CPAPPressure` und dann ausgeblendet). Druck in hPa wird exakt in cmH2O umgerechnet (× 1/0,980665); Skalierung immer aus dem Header.
+* **Ereignisse:** `EndTime` und `Duration` in 1/10 s; `EndTime` ist das **Ende** des Ereignisses relativ zum Start der zugehörigen Signaldatei. Geprüft: Bei obstruktiven Apnoen fällt die Flow-Amplitude genau im Fenster `[EndTime − Duration, EndTime]` auf ca. 15 % (Hypopnoen ca. 45 %) des Werts davor; die größte `EndTime` jeder Datei entspricht der Signaldauer.
+* Ereignis-IDs: 101 OA, 102 CA, 103/105/106 Apnoe (Leckage/hoher Druck/Bewegung → UA), 111/112/113 Hypopnoe → H, 121 RERA, 131 Schnarchen → VS, 141 Artefakt, 151 Flusslimitierung, 161 kritische Leckage → LL, 181 CSR, 221 gerätegetriggerter Atemzug, 1–5 Zwei-Minuten-Epochen (schwere/leichte Obstruktion, Flusslimitierung, Schnarchen, periodische Atmung), 261 Tiefschlaf-Epoche (Geräteschätzung).
+* Parameter (`DeviceEventID="0"`): 6 Modus (1 CPAP, 2 APAP), 9/10 Druck min/max (1/100 hPa), 11/12 Softstart-Drücke, 13 softPAP (0 aus, 1 leicht, 2 standard), 15 APAP-Regelung (1 standard, 2 dynamisch), 16 Befeuchterstufe, 17 Autostart, 18/19 Softstart-Zeit, 21 Schlauchtyp, 38 PMaxOA.
+
+### Nicht interpretiert (bewusst)
+
+* Ereignis-IDs ohne öffentliche Dokumentation (z. B. 108, 231, 241, 262, 1007, 1008, 1101, 1111, 1112, 1118, 1126, 1129, 1130, 1230, 1231, 1240, 1241) werden **nicht** als Ereignisse übernommen, sondern je Nacht gezählt (`summary_raw.unknown_event_codes`).
+* Unbekannte Parameter (z. B. 14) landen in `summary_raw.unknown_parameters`.
+* `statistic.psstat`, `trendCurves.tc`, Protokolle: nur archiviert. Daher gibt es (anders als bei ResMed-STR.edf) **keine Geräte-Tageswerte**; AHI usw. berechnet Sleepy aus den Ereignissen.
+* Einheiten von Softstart-Zeit und Schlauchtyp werden als Gerätewert angezeigt.
+* prisma LINE (`config.pcfg`, `therapy.pdat`) wird erkannt und archiviert, aber nicht ausgewertet (keine Testdaten).
+
 ## 4. Andere Hersteller
 
 | Hersteller | Status in Sleepy | Begründung |
 |---|---|---|
 | Philips Respironics (System One / DreamStation) | **Erkennung** (Ordner `P-Series`), Dateien werden archiviert, aber **nicht ausgewertet** | Binärformat mit vielen Versionen, DreamStation 2 zusätzlich verschlüsselt. Ohne Testdaten keine verlässliche Implementierung. |
-| Löwenstein (prisma) | **nicht unterstützt**, keine Erkennung | Format ohne belastbare öffentliche Dokumentation; nichts erfunden. |
+| Löwenstein prisma SMART/SOFT | **unterstützt** (Abschnitt 3b) | an einer echten Karte geprüft |
+| Löwenstein prisma LINE | **Erkennung**, archiviert, nicht ausgewertet | keine Testdaten |
 | Fisher & Paykel, BMC/Luna, React Health | nicht unterstützt | wie oben |
 
 Die Parser-Architektur (`CPAPParser` mit `detect/identify/classify/plan/parse_night/summaries`) ist so geschnitten, dass weitere Hersteller als eigene Module ergänzt werden können (siehe [PARSERS.md](PARSERS.md)). Da Originaldaten immer archiviert werden, können früher importierte, damals nicht unterstützte Karten später ausgewertet werden.
