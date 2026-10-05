@@ -477,6 +477,41 @@ function AppearanceTab() {
   );
 }
 
+function AppSessions() {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["app-sessions"],
+    queryFn: () => api.get<{ id: number; device_name: string | null; created_at: string; last_seen_at: string; ip: string | null }[]>("/api/auth/app-sessions"),
+  });
+  return (
+    <div className="stack" style={{ gap: "0.5rem" }}>
+      <p className="muted small" style={{ margin: 0 }}>
+        Geräte, auf denen die Sleepy-Android-App mit deinem Konto angemeldet ist. Ein Widerruf meldet die App sofort ab.
+        Die Handy-Oberfläche gibt es auch im Browser unter <a href="/m/">/m/</a>.
+      </p>
+      {q.data && q.data.length === 0 && <p className="muted small">Keine App verbunden.</p>}
+      {q.data && q.data.length > 0 && (
+        <table className="table small">
+          <tbody>
+            {q.data.map((s) => (
+              <tr key={s.id}>
+                <td>{s.device_name ?? "App"}</td>
+                <td>angemeldet {dateTimeDe(s.created_at)}</td>
+                <td>zuletzt {dateTimeDe(s.last_seen_at)}</td>
+                <td>
+                  <button className="small danger" onClick={async () => { await api.del(`/api/auth/app-sessions/${s.id}`); qc.invalidateQueries({ queryKey: ["app-sessions"] }); }}>
+                    Widerrufen
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const [tab, setTab] = useState("profile");
@@ -496,6 +531,7 @@ export default function Settings() {
         <div className="grid cols-2">
           <Card title="Passwort ändern"><PasswordForm /></Card>
           <Card title="Zwei-Faktor-Authentifizierung"><TotpSection /></Card>
+          <Card title="Verbundene Apps"><AppSessions /></Card>
         </div>
       )}
       {tab === "appearance" && <AppearanceTab />}

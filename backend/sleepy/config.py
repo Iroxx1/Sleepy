@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     cookie_secure: str = "auto"  # auto | true | false
     session_idle_minutes: int = 480
     session_max_days: int = 7
+    app_session_days: int = 365  # mobile app login validity
+    app_idle_days: int = 60  # app login expires after this many days without use
     login_rate_limit: int = 10  # attempts per window per IP / username
     login_rate_window_minutes: int = 15
     trusted_proxies: str = "127.0.0.1"  # comma separated, '*' = any

@@ -47,13 +47,19 @@ def clear_session_cookies(response: Response) -> None:
     response.delete_cookie(CSRF_COOKIE, path="/")
 
 
-def create_session(db: Session, request: Request, user: User, mfa_pending: bool) -> tuple[str, AuthSession]:
+def create_session(
+    db: Session, request: Request, user: User, mfa_pending: bool, kind: str = "web", device_name: str | None = None
+) -> tuple[str, AuthSession]:
     token = new_token()
+    st = get_settings()
+    days = st.app_session_days if kind == "app" else st.session_max_days
     s = AuthSession(
         token_hash=token_hash(token),
         user_id=user.id,
         csrf_token=secrets.token_urlsafe(24),
-        expires_at=utcnow() + timedelta(days=get_settings().session_max_days),
+        kind=kind,
+        device_name=(device_name or "")[:128] or None,
+        expires_at=utcnow() + timedelta(days=days),
         ip=client_ip(request)[:64],
         user_agent=(request.headers.get("user-agent") or "")[:255],
         mfa_pending=mfa_pending,
@@ -63,15 +69,28 @@ def create_session(db: Session, request: Request, user: User, mfa_pending: bool)
     return token, s
 
 
+def bearer_token(request: Request) -> str | None:
+    h = request.headers.get("authorization", "")
+    if h[:7].lower() == "bearer ":
+        return h[7:].strip() or None
+    return None
+
+
 def _load_session(request: Request, db: Session) -> AuthSession | None:
-    token = request.cookies.get(SESSION_COOKIE)
+    """Session from the mobile app bearer token or the browser cookie."""
+    bearer = bearer_token(request)
+    token = bearer or request.cookies.get(SESSION_COOKIE)
     if not token:
         return None
     s = db.scalar(select(AuthSession).where(AuthSession.token_hash == token_hash(token)))
     if s is None:
         return None
+    # a bearer token must belong to an app session and vice versa
+    if (s.kind == "app") != bool(bearer):
+        return None
+    st = get_settings()
     now = utcnow()
-    idle = timedelta(minutes=get_settings().session_idle_minutes)
+    idle = timedelta(days=st.app_idle_days) if s.kind == "app" else timedelta(minutes=st.session_idle_minutes)
     if s.expires_at < now or s.last_seen_at + idle < now:
         db.delete(s)
         db.commit()
@@ -85,6 +104,9 @@ def _load_session(request: Request, db: Session) -> AuthSession | None:
 
 
 def check_csrf(request: Request, s: AuthSession) -> None:
+    # CSRF only affects cookie based sessions; bearer tokens are never sent automatically.
+    if s.kind == "app":
+        return
     if request.method in UNSAFE:
         sent = request.headers.get(CSRF_HEADER, "")
         if not sent or not secrets.compare_digest(sent, s.csrf_token):

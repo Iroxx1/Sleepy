@@ -34,7 +34,8 @@ CSP = (
 class SecurityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Origin check for state changing requests (CSRF defence in depth)
-        if request.method in UNSAFE:
+        bearer = request.headers.get("authorization", "")[:7].lower() == "bearer "
+        if request.method in UNSAFE and not bearer:
             origin = request.headers.get("origin")
             if origin and origin != "null":
                 host = request.headers.get("host", "")
@@ -167,6 +168,9 @@ def create_app() -> FastAPI:
             if "/assets/" in f"/{full_path}":
                 headers["Cache-Control"] = "public, max-age=31536000, immutable"
             return FileResponse(target, headers=headers)
+        if (full_path == "m" or full_path.startswith("m/")) and (dist / "m" / "index.html").exists():
+            # mobile web app (same UI as the Android app)
+            return FileResponse(dist / "m" / "index.html", headers={"Cache-Control": "no-cache"})
         return FileResponse(dist / "index.html", headers={"Cache-Control": "no-cache"})
 
     return app

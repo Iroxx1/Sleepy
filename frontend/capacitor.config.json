@@ -1,0 +1,17 @@
+{
+  "appId": "io.github.iroxx1.sleepy",
+  "appName": "Sleepy",
+  "webDir": "dist/m",
+  "android": {
+    "allowMixedContent": true
+  },
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

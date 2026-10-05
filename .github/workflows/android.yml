@@ -1,0 +1,84 @@
+name: Android-App (APK)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/android.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Web-Oberfläche bauen
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: Eigener Signaturschlüssel (optional, GitHub-Secrets)
+        env:
+          KS_B64: ${{ secrets.SLEEPY_KEYSTORE_BASE64 }}
+        if: env.KS_B64 != ''
+        run: |
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "SLEEPY_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: APK bauen
+        working-directory: frontend/android
+        env:
+          SLEEPY_KEYSTORE_PASSWORD: ${{ secrets.SLEEPY_KEYSTORE_PASSWORD }}
+          SLEEPY_KEY_ALIAS: ${{ secrets.SLEEPY_KEY_ALIAS }}
+          SLEEPY_KEY_PASSWORD: ${{ secrets.SLEEPY_KEY_PASSWORD }}
+        run: |
+          VERSION=$(node -p "require('../package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          ./gradlew assembleRelease --no-daemon -PsleepyVersionCode=${{ github.run_number }} -PsleepyVersionName=$VERSION
+          mkdir -p ../../apk
+          cp app/build/outputs/apk/release/app-release.apk "../../apk/Sleepy-$VERSION-build${{ github.run_number }}.apk"
+          sha256sum ../../apk/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sleepy-android-apk
+          path: apk/*.apk
+
+      - name: Als GitHub-Release „android-latest“ veröffentlichen
+        if: github.ref == 'refs/heads/main'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --cleanup-tag -y || true
+          gh release create android-latest apk/*.apk \
+            --target "${{ github.sha }}" \
+            --title "Sleepy Android-App ${VERSION} (Build ${{ github.run_number }})" \
+            --notes "Android-App für Sleepy. APK auf dem Handy herunterladen und installieren (Installation aus unbekannten Quellen erlauben). Anleitung: docs/ANDROID.md. Commit ${{ github.sha }}." \
+            --latest

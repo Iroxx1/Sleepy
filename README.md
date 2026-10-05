@@ -1,6 +1,6 @@
 # Sleepy – self-hosted CPAP-Datenanalyse
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue) ![Python](https://img.shields.io/badge/python-3.11%2B-blue) ![Self-hosted](https://img.shields.io/badge/self--hosted-100%25%20lokal-green)
+![Version](https://img.shields.io/badge/version-1.2.0-blue) ![Python](https://img.shields.io/badge/python-3.11%2B-blue) ![Self-hosted](https://img.shields.io/badge/self--hosted-100%25%20lokal-green)
 
 Sleepy ist eine vollständig lokal laufende Webanwendung, die die SD-Karten-Daten von PAP-Geräten importiert, unverändert archiviert, normalisiert und – ähnlich SleepHQ/OSCAR – detailliert auswertet: Nachtanalyse mit hochaufgelöstem Flow, synchronisierten Diagrammen und Ereignisnavigation, Kalender, Langzeittrends, Vergleiche, Berichte und Export.
 
@@ -22,6 +22,7 @@ Sleepy ist eine vollständig lokal laufende Webanwendung, die die SD-Karten-Date
 | Hardware | Gerät, Masken, Polster, Schläuche, Filter, Wasserkammer mit Startdatum; eigenes Austauschintervall mit Erinnerung im Dashboard; „Ersetzen“ mit einem Klick (z. B. jährliche neue Maske); Turbinen-/Laufzeitstunden als Ablesungen mit Verlauf, Ø Stunden/Tag und optionaler Hochrechnung; Therapiestunden seit Start aus den Daten; Vorher/Nachher-Vergleich (Leckage, AHI …); Wechsel als Markierung in den Trends |
 | Darstellung | Hell/Dunkel/System (Mond-/Sonnen-Symbol oben rechts), eigenes CSS pro Benutzer und globales CSS (Admin) mit Beispielen und Variablenliste |
 | Hilfe | „Hilfe & Legende“: alle Abkürzungen (AHI, CAI, RERA, EPR, P95 …) auf Deutsch, durchsuchbar; Tooltips an den Kennzahlen; Bedienung der Diagramme und Suchsyntax |
+| Android-App | Eigene App (APK) mit Login am eigenen Server: Übersicht, Nächte, Nacht-Diagramme mit **Pinch-Zoom** (Zeit und Skala), Kalender, Trends, Hardware – ohne Upload/Hilfe. Auch im Browser unter `/m/`. Siehe [docs/ANDROID.md](docs/ANDROID.md) |
 | Berichte & Export | Wochen-/Monats-/Zeitraumberichte als HTML, PDF, CSV, JSON; Export Nächte/Ereignisse (CSV, JSON, optional Parquet), Komplett-ZIP inkl. aller Zeitreihen, Originaldaten-ZIP |
 | Sicherheit | Login (Argon2id), serverseitige Sessions, CSRF, Rate Limiting, optionale TOTP-2FA, mehrere Benutzer mit Datentrennung, Admin-Rolle, Audit-Log, CSP & Sicherheitsheader, keine Telemetrie/CDNs/Webfonts |
 | Betrieb | `install.sh` für Debian-LXC, `update.sh`, Backup/Restore (inkl. täglichem Timer), Healthcheck, Diagnose, Logging, OpenAPI/Swagger offline, optional Docker/Podman |
@@ -95,11 +96,12 @@ Einfach immer die komplette Karte importieren: bekannte Dateien werden erkannt, 
 * [ARCHITECTURE.md](ARCHITECTURE.md) – Komponenten, Datenschichten, Datenflüsse, Sicherheit
 * [docs/API.md](docs/API.md) – REST-API; interaktiv unter `/api/docs` (Swagger, offline), Schema `/api/openapi.json` (nach Login)
 * [docs/PARSERS.md](docs/PARSERS.md) – Parser-Architektur, neue Hersteller
+* [docs/ANDROID.md](docs/ANDROID.md) – Android-App: Installation, Verbindung, Pinch-Zoom, Bauen, Signatur
 
 ```
 parser/    cpap_parser – EDF/EDF+, ResMed-Parser, Testdaten-Generator
 backend/   sleepy – FastAPI, Datenmodell, Import, Analyse, Reports, CLI
-frontend/  React/TypeScript/Vite/ECharts
+frontend/  React/TypeScript/Vite/ECharts (src = Web, mobile = Handy-UI, android = Capacitor-Projekt)
 tests/     pytest (Parser, Import, Duplikate, DB, API, Auth, Charts, Statistik, Backup)
 scripts/   install/update/backup/restore/healthcheck/diagnose/dev
 deploy/    systemd, Nginx/Caddy/Traefik, Docker

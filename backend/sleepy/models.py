@@ -63,6 +63,9 @@ class AuthSession(Base):
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
     mfa_pending: Mapped[bool] = mapped_column(Boolean, default=False)
+    #: "web" (browser cookie) or "app" (mobile app, Authorization: Bearer)
+    kind: Mapped[str] = mapped_column(String(8), default="web", server_default="web")
+    device_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     user: Mapped[User] = relationship()
 

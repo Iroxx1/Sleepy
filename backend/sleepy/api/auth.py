@@ -137,6 +137,87 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
     return {"mfa_required": u.totp_enabled, "user": None if u.totp_enabled else user_out(u, s)}
 
 
+class AppLoginIn(BaseModel):
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=1024)
+    code: str | None = Field(None, max_length=10)
+    device_name: str | None = Field(None, max_length=128)
+
+
+@router.post("/app-login")
+def app_login(body: AppLoginIn, request: Request, db: Session = Depends(get_db)):
+    """Login for the mobile app. Returns a bearer token (no cookies).
+
+    If two-factor authentication is enabled and no code is given, the response
+    is ``{"mfa_required": true}`` and the app asks for the code.
+    """
+    st = get_settings()
+    window = st.login_rate_window_minutes * 60
+    keys = _rate_keys(request, body.username)
+    if any(login_limiter.blocked(k, st.login_rate_limit, window) for k in keys):
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"Zu viele Anmeldeversuche. Bitte in {st.login_rate_window_minutes} Minuten erneut versuchen.",
+        )
+    u = db.scalar(select(User).where(func.lower(User.username) == body.username.lower()))
+    if u is None:
+        dummy_verify()
+        ok = False
+    else:
+        ok = verify_password(u.password_hash, body.password) and u.is_active
+    if ok and u.totp_enabled:
+        if not body.code:
+            return {"mfa_required": True, "token": None, "user": None}
+        ok = bool(u.totp_secret) and verify_totp(u.totp_secret, body.code)
+    if not ok:
+        for k in keys:
+            login_limiter.hit(k, st.login_rate_limit, window)
+        audit(db, request, None, "app_login_failed", username=body.username[:64])
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Benutzername, Passwort oder Code falsch.")
+    for k in keys:
+        login_limiter.reset(k)
+    token, s = create_session(db, request, u, mfa_pending=False, kind="app",
+                              device_name=body.device_name or "Android-App")
+    u.last_login_at = utcnow()
+    db.commit()
+    audit(db, request, u, "app_login", device=s.device_name)
+    return {"mfa_required": False, "token": token, "user": user_out(u, None),
+            "expires_at": s.expires_at.isoformat()}
+
+
+@router.post("/app-logout")
+def app_logout(s: AuthSession = Depends(current_session), db: Session = Depends(get_db)):
+    if s.kind == "app":
+        db.delete(s)
+        db.commit()
+    return {"ok": True}
+
+
+@router.get("/app-sessions")
+def app_sessions(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    rows = db.scalars(
+        select(AuthSession).where(AuthSession.user_id == user.id, AuthSession.kind == "app")
+        .order_by(AuthSession.last_seen_at.desc())
+    )
+    return [
+        {"id": r.id, "device_name": r.device_name, "created_at": r.created_at.isoformat(),
+         "last_seen_at": r.last_seen_at.isoformat(), "expires_at": r.expires_at.isoformat(), "ip": r.ip}
+        for r in rows
+    ]
+
+
+@router.delete("/app-sessions/{session_id}")
+def revoke_app_session(session_id: int, request: Request, user: User = Depends(current_user),
+                       db: Session = Depends(get_db)):
+    r = db.get(AuthSession, session_id)
+    if r is None or r.user_id != user.id or r.kind != "app":
+        raise HTTPException(404, "Nicht gefunden")
+    db.delete(r)
+    db.commit()
+    audit(db, request, user, "app_session_revoked", device=r.device_name)
+    return {"ok": True}
+
+
 @router.post("/totp/verify")
 def totp_verify(body: CodeIn, request: Request, s: AuthSession = Depends(current_session), db: Session = Depends(get_db)):
     st = get_settings()
@@ -189,7 +270,9 @@ def change_password(body: PasswordIn, request: Request, user: User = Depends(cur
         raise HTTPException(status.HTTP_400_BAD_REQUEST, err)
     user.password_hash = hash_password(body.new_password)
     # invalidate all other sessions
-    current = request.cookies.get(SESSION_COOKIE)
+    from .deps import bearer_token
+
+    current = bearer_token(request) or request.cookies.get(SESSION_COOKIE)
     from ..security import token_hash
 
     db.execute(
