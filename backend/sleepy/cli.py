@@ -24,6 +24,13 @@ import urllib.request
 from pathlib import Path
 
 
+def _gen_password() -> str:
+    import string
+
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(16))
+
+
 def _pw(args) -> str:
     if args.password:
         return args.password
@@ -51,7 +58,7 @@ def cmd_create_user(args) -> None:
     from .security import hash_password, validate_password_strength
 
     init_db()
-    pw = args.password or (secrets.token_urlsafe(12) if args.generate else _pw(args))
+    pw = args.password or (_gen_password() if args.generate else _pw(args))
     err = validate_password_strength(pw)
     if err:
         sys.exit(err)
@@ -72,7 +79,7 @@ def cmd_reset_password(args) -> None:
     from .security import hash_password, validate_password_strength
 
     init_db()
-    pw = args.password or (secrets.token_urlsafe(12) if args.generate else _pw(args))
+    pw = args.password or (_gen_password() if args.generate else _pw(args))
     err = validate_password_strength(pw)
     if err:
         sys.exit(err)

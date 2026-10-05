@@ -1,0 +1,13 @@
+# Caddy (automatisches HTTPS mit interner CA: "tls internal")
+sleepy.home.lan {
+    tls internal
+    request_body {
+        max_size 8GB
+    }
+    reverse_proxy <LXC-IP>:8000 {
+        transport http {
+            read_timeout 10m
+            write_timeout 10m
+        }
+    }
+}

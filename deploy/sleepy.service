@@ -1,0 +1,37 @@
+[Unit]
+Description=Sleepy – self-hosted CPAP-Datenanalyse
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sleepy
+Group=sleepy
+EnvironmentFile=/etc/sleepy/sleepy.env
+Environment=TMPDIR=/var/lib/sleepy/tmp
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory=/var/lib/sleepy
+ExecStart=/opt/sleepy/venv/bin/sleepy serve
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+# Härtung
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictNamespaces=true
+ReadWritePaths=/var/lib/sleepy
+# Server-Importverzeichnis außerhalb von /var/lib/sleepy? Dann hier lesend freigeben:
+# ReadOnlyPaths=/srv/cpap-import
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

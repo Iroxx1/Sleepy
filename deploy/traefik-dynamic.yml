@@ -1,0 +1,15 @@
+# Traefik File-Provider (dynamische Konfiguration)
+http:
+  routers:
+    sleepy:
+      rule: "Host(`sleepy.home.lan`)"
+      entryPoints: ["websecure"]
+      service: sleepy
+      tls: {}
+  services:
+    sleepy:
+      loadBalancer:
+        servers:
+          - url: "http://<LXC-IP>:8000"
+# Hinweis: Traefik puffert Uploads nicht standardmäßig; für sehr große ZIPs ggf.
+# entryPoints.websecure.transport.respondingTimeouts.readTimeout erhöhen.

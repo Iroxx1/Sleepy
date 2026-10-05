@@ -1,0 +1,10 @@
+[Unit]
+Description=Sleepy – nächtliches Backup
+
+[Service]
+Type=oneshot
+User=sleepy
+Group=sleepy
+EnvironmentFile=/etc/sleepy/sleepy.env
+Environment=TMPDIR=/var/lib/sleepy/tmp
+ExecStart=/opt/sleepy/venv/bin/sleepy backup
