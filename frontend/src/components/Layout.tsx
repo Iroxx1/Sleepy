@@ -13,14 +13,16 @@ const NAV = [
   { to: "/compare", label: "Vergleich", icon: "compare" },
   { to: "/import", label: "Import", icon: "import" },
   { to: "/devices", label: "Geräte", icon: "devices" },
+  { to: "/hardware", label: "Hardware", icon: "hardware" },
   { to: "/reports", label: "Reports & Export", icon: "reports" },
   { to: "/settings", label: "Einstellungen", icon: "settings" },
+  { to: "/help", label: "Hilfe & Legende", icon: "help" },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const { devices, deviceId, setDeviceId } = useDevice();
-  const { mode, setMode } = useTheme();
+  const { mode, resolved, setMode } = useTheme();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   const current = NAV.find((n) => (n.end ? loc.pathname === n.to : loc.pathname.startsWith(n.to)));
@@ -69,6 +71,14 @@ export default function Layout() {
               ))}
             </select>
           )}
+          <button
+            className="ghost theme-toggle"
+            onClick={() => setMode(resolved === "dark" ? "light" : "dark")}
+            title={resolved === "dark" ? "Hellen Modus aktivieren" : "Dunkelmodus aktivieren"}
+            aria-label="Hell/Dunkel umschalten"
+          >
+            <Icon name={resolved === "dark" ? "sun" : "moon"} />
+          </button>
           <select aria-label="Darstellung" value={mode} onChange={(e) => setMode(e.target.value as "light" | "dark" | "system")}>
             <option value="system">System</option>
             <option value="light">Hell</option>

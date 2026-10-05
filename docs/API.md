@@ -38,6 +38,7 @@ Zeitstempel (`*_ms`) sind Gerätezeit als „Wall-Clock-Millisekunden“ (lokale
 | PUT | `/api/auth/preferences` | Put Preferences |
 | GET | `/api/imports` | List Imports |
 | POST | `/api/imports` | Create |
+| POST | `/api/imports/demo` | Generate and import a SYNTHETIC ResMed card (device serial DEMO00000001). |
 | PUT | `/api/imports/{import_id}/upload` | Stream a ZIP file as raw request body (supports multi-GB uploads). |
 | POST | `/api/imports/{import_id}/files` | Upload a batch of files of a folder (relative paths in *paths*). |
 | GET | `/api/imports/{import_id}/files` | Import Files |
@@ -72,6 +73,7 @@ Zeitstempel (`*_ms`) sind Gerätezeit als „Wall-Clock-Millisekunden“ (lokale
 | GET | `/api/devices` | Devices |
 | GET | `/api/devices/{device_id}` | Device |
 | PATCH | `/api/devices/{device_id}` | Update Device |
+| DELETE | `/api/devices/{device_id}` | Delete a device with all its nights.  Original files stay in the archive |
 | GET | `/api/devices/{device_id}/settings-history` | Periods with identical device settings (changes over time). |
 | GET | `/api/users` | Users |
 | POST | `/api/users` | Create User |
@@ -85,4 +87,17 @@ Zeitstempel (`*_ms`) sind Gerätezeit als „Wall-Clock-Millisekunden“ (lokale
 | POST | `/api/system/backups` | Make Backup |
 | GET | `/api/system/backups/{name}` | Download Backup |
 | GET | `/api/system/audit` | Audit Log |
+| GET | `/api/hardware` | List Items |
+| POST | `/api/hardware` | Create Item |
+| GET | `/api/hardware/timeline` | Start/end dates of equipment, e.g. as markers in trend charts. |
+| GET | `/api/hardware/{item_id}` | Get Item |
+| PATCH | `/api/hardware/{item_id}` | Update Item |
+| DELETE | `/api/hardware/{item_id}` | Delete Item |
+| POST | `/api/hardware/{item_id}/replace` | Retire an item and create its successor (e.g. the yearly new mask). |
+| POST | `/api/hardware/{item_id}/readings` | Add Reading |
+| DELETE | `/api/hardware/{item_id}/readings/{reading_id}` | Delete Reading |
+| GET | `/api/hardware/{item_id}/impact` | Statistical comparison of key metrics before vs. after the start date. |
+| GET | `/api/appearance` | Get Appearance |
+| PUT | `/api/appearance/user` | Put User Css |
+| PUT | `/api/appearance/global` | Put Global Css |
 | GET | `/api/channels` | Channel Registry |

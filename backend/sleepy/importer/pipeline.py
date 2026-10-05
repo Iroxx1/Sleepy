@@ -62,6 +62,9 @@ STAT_KEYS = (
 )
 
 
+DEMO_SERIAL = "DEMO00000001"
+
+
 class ImportAbort(Exception):
     """User-facing import failure."""
 
@@ -134,7 +137,7 @@ class Runner:
             imp.message = self.final_message()
             imp.progress = 1.0
             imp.stage = "done"
-            if imp.source in ("zip", "folder") and imp.status == "completed":
+            if imp.source in ("zip", "folder", "demo") and imp.status == "completed":
                 shutil.rmtree(staging_path(imp.id), ignore_errors=True)
         except ImportAbort as exc:
             self.db.rollback()
@@ -193,6 +196,21 @@ class Runner:
                 except UnsafeArchive as exc:
                     raise ImportAbort(str(exc)) from exc
                 files.extend((f"{z.stem}/{r}", extract_root / z.stem / r) for r in rels)
+        elif imp.source == "demo":
+            from datetime import date as _date
+
+            from cpap_parser.testing.synthetic_resmed import write_card
+
+            root = base / "files"
+            if not root.exists() or not any(root.rglob("*")):
+                n = int(imp.options.get("nights", 60))
+                first = _date.today() - timedelta(days=n)
+                self.progress("check", 0.1, f"Erzeuge {n} synthetische Beispielnächte …", force=True)
+                write_card(root / "DEMO_SD", first, n, seed=int(imp.options.get("seed", 2026)),
+                           serial=DEMO_SERIAL, oximetry=bool(imp.options.get("oximetry", False)))
+            for p in sorted(root.rglob("*")):
+                if p.is_file():
+                    files.append((p.relative_to(root).as_posix(), p))
         elif imp.source == "folder":
             root = base / "files"
             if not root.exists():
@@ -309,6 +327,8 @@ class Runner:
             if v:
                 setattr(dev, attr, v)
         dev.identification = info.identification
+        if serial.startswith("DEMO") and not dev.display_name:
+            dev.display_name = "Demo-Gerät (synthetische Beispieldaten)"
         dev.parser = parser.name
         dev.last_seen_at = utcnow()
         self.db.flush()
@@ -490,7 +510,7 @@ def create_import(db: Session, user: User, source: str, name: str | None = None,
     imp = Import(id=new_import_id(), owner_id=user.id, source=source, original_name=name, options=options or {})
     db.add(imp)
     db.commit()
-    if source in ("zip", "folder"):
+    if source in ("zip", "folder", "demo"):
         staging_path(imp.id).mkdir(parents=True, exist_ok=True)
     return imp
 

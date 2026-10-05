@@ -282,3 +282,51 @@ export interface Agg {
   leak_p95_mean: number | null;
   compliance_pct: number;
 }
+
+export interface HardwareReading {
+  id: number;
+  read_on: string;
+  kind: string;
+  value: number;
+  note: string | null;
+}
+
+export interface ReadingStats {
+  kind: string;
+  label: string;
+  count: number;
+  latest_value: number;
+  latest_on: string;
+  per_day: number | null;
+  decreasing: boolean;
+  projection: { expected_hours: number; pct_used: number; remaining_hours: number; estimated_date: string | null } | null;
+}
+
+export interface HardwareItem {
+  id: number;
+  category: string;
+  category_label: string;
+  name: string;
+  manufacturer: string | null;
+  model: string | null;
+  size: string | null;
+  serial: string | null;
+  device_id: number | null;
+  started_on: string | null;
+  ended_on: string | null;
+  active: boolean;
+  age_days: number | null;
+  replace_after_days: number | null;
+  expected_hours: number | null;
+  due: { due_on: string; days_left: number; status: "ok" | "soon" | "due" } | null;
+  therapy_usage: { hours: number; nights: number } | null;
+  notes: string | null;
+  readings: HardwareReading[];
+  reading_stats: Record<string, ReadingStats>;
+}
+
+export interface HardwareList {
+  items: HardwareItem[];
+  categories: Record<string, string>;
+  reading_kinds: Record<string, string>;
+}

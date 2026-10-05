@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import type { Dashboard as DashboardT } from "../api/types";
+import type { Dashboard as DashboardT, HardwareList } from "../api/types";
 import { useDevice } from "../hooks/useDevice";
 import { Card, Disclaimer, Empty, ErrorBox, Kpi, Loading, StatusDot } from "../components/ui";
 import EChart from "../components/EChart";
@@ -19,6 +19,9 @@ export default function Dashboard() {
     queryKey: ["dashboard", deviceId],
     queryFn: () => api.get<DashboardT>("/api/dashboard", { device_id: deviceId }),
   });
+
+  const hw = useQuery({ queryKey: ["hardware"], queryFn: () => api.get<HardwareList>("/api/hardware") });
+  const hwHints = (hw.data?.items || []).filter((i) => i.active && i.due && i.due.status !== "ok");
 
   const trendOption = useMemo(() => {
     const d = q.data;
@@ -122,6 +125,19 @@ export default function Dashboard() {
           </div>
         )}
       </Card>
+
+      {hwHints.length > 0 && (
+        <div className="alert info">
+          <strong>Hardware:</strong>{" "}
+          {hwHints.map((i) => (
+            <span key={i.id} style={{ marginRight: 12 }}>
+              {i.category_label} „{i.name}“ –{" "}
+              {i.due!.status === "due" ? `dein Austauschintervall ist seit ${-i.due!.days_left} Tagen erreicht` : `Austausch laut deinem Intervall in ${i.due!.days_left} Tagen`}
+            </span>
+          ))}{" "}
+          <Link to="/hardware">zur Hardware →</Link>
+        </div>
+      )}
 
       <div className="grid cols-2">
         <Card title="Letzte 7 Tage">

@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Thresholds } from "../api/types";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
+import { reloadCustomCss } from "../components/CustomStyles";
 import { Card, ErrorBox, Loading } from "../components/ui";
 import { bytes, dateTimeDe } from "../lib/format";
 
@@ -374,6 +376,107 @@ function SystemAdmin() {
   );
 }
 
+
+const CSS_VARS: [string, string][] = [
+  ["--bg", "Seitenhintergrund"],
+  ["--surface", "Karten/Flächen"],
+  ["--surface-2", "Kennzahl-Kacheln, Tabellen-Hover"],
+  ["--border", "Rahmenlinien"],
+  ["--text", "Schriftfarbe"],
+  ["--muted", "Gedämpfte Schrift"],
+  ["--primary", "Akzentfarbe (Buttons, Links)"],
+  ["--primary-soft", "heller Akzent (aktive Navigation)"],
+  ["--st-green / --st-yellow / --st-red", "Ampelfarben"],
+  ["--radius", "Eckenradius"],
+  ["--sidebar", "Breite der Navigation"],
+];
+
+const EXAMPLES: [string, string][] = [
+  ["Akzent Grün", ":root, :root[data-theme=\"dark\"] {\n  --primary: #16a34a;\n  --primary-soft: rgba(22, 163, 74, 0.15);\n}\n"],
+  ["Dunkel: echtes Schwarz (OLED)", ":root[data-theme=\"dark\"] {\n  --bg: #000;\n  --surface: #0a0a0a;\n  --surface-2: #141414;\n  --border: #262626;\n}\n"],
+  ["Größere Schrift", ":root {\n  font-size: 17px;\n}\n"],
+  ["Kompakter, eckiger", ":root {\n  --radius: 4px;\n}\n.card { padding: 0.75rem; }\n.content { max-width: none; }\n"],
+];
+
+function CssEditor({ value, onSave, label }: { value: string; onSave: (css: string) => Promise<unknown>; label: string }) {
+  const [css, setCss] = useState(value);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState<unknown>(null);
+  useEffect(() => setCss(value), [value]);
+  async function save(next = css) {
+    setErr(null);
+    setMsg("");
+    try {
+      await onSave(next);
+      reloadCustomCss();
+      setMsg("Gespeichert und angewendet.");
+    } catch (e) {
+      setErr(e);
+    }
+  }
+  return (
+    <div className="stack" style={{ gap: "0.5rem" }}>
+      <textarea className="code" rows={12} spellCheck={false} value={css} onChange={(e) => setCss(e.target.value)} aria-label={label}
+        placeholder={":root {\n  --primary: #16a34a;\n}"} />
+      <div className="row">
+        <button className="primary" onClick={() => save()}>Speichern & anwenden</button>
+        <label className="btn">
+          CSS-Datei laden…
+          <input type="file" accept=".css,text/css" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) setCss(await f.text()); }} />
+        </label>
+        <button onClick={() => { const b = new Blob([css], { type: "text/css" }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "sleepy-custom.css"; a.click(); }}>
+          Herunterladen
+        </button>
+        <button className="danger" onClick={() => { setCss(""); save(""); }}>Zurücksetzen</button>
+        {msg && <span className="small muted">{msg}</span>}
+      </div>
+      <ErrorBox error={err} />
+      <div className="row small">
+        <span className="muted">Beispiele einfügen:</span>
+        {EXAMPLES.map(([n, c]) => <button key={n} className="small" onClick={() => setCss((css ? css + "\n" : "") + c)}>{n}</button>)}
+      </div>
+    </div>
+  );
+}
+
+function AppearanceTab() {
+  const { user } = useAuth();
+  const { mode, setMode } = useTheme();
+  const q = useQuery({ queryKey: ["appearance"], queryFn: () => api.get<{ user_css: string; global_css: string }>("/api/appearance") });
+  return (
+    <div className="stack">
+      <Card title="Farbschema">
+        <div className="btn-group">
+          {([["system", "Wie System"], ["light", "Hell"], ["dark", "Dunkel"]] as const).map(([k, l]) => (
+            <button key={k} className={mode === k ? "active" : ""} onClick={() => setMode(k)}>{l}</button>
+          ))}
+        </div>
+        <p className="muted small">Umschalten geht auch jederzeit über das Mond-/Sonnen-Symbol oben rechts. Die Wahl wird in diesem Browser gespeichert.</p>
+      </Card>
+      <Card title="Eigenes CSS (nur für dich)">
+        <p className="muted small" style={{ marginTop: 0 }}>
+          Eigene Stylesheet-Regeln werden nach dem Standard-Design geladen und überschreiben es. Am einfachsten über die Farbvariablen.
+          Externe Ressourcen (Schriften, Bilder von anderen Servern) werden aus Datenschutzgründen durch die Content-Security-Policy blockiert.
+        </p>
+        {q.data && <CssEditor label="Eigenes CSS" value={q.data.user_css} onSave={(css) => api.put("/api/appearance/user", { css })} />}
+      </Card>
+      {user?.role === "admin" && (
+        <Card title="Globales CSS (alle Benutzer, auch Anmeldeseite)">
+          {q.data && <CssEditor label="Globales CSS" value={q.data.global_css} onSave={(css) => api.put("/api/appearance/global", { css })} />}
+        </Card>
+      )}
+      <Card title="Verfügbare Variablen">
+        <table className="table small">
+          <tbody>
+            {CSS_VARS.map(([v, d]) => <tr key={v}><td className="mono">{v}</td><td>{d}</td></tr>)}
+          </tbody>
+        </table>
+        <p className="muted small">Hell-/Dunkel-spezifische Regeln: <code>:root[data-theme="dark"] {"{ … }"}</code> bzw. <code>:root[data-theme="light"]</code>. Wichtige Klassen: <code>.card</code>, <code>.kpi</code>, <code>.sidebar</code>, <code>.topbar</code>, <code>.table</code>, <code>.chart-panel</code>.</p>
+      </Card>
+    </div>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const [tab, setTab] = useState("profile");
@@ -384,6 +487,7 @@ export default function Settings() {
     <div className="stack">
       <div className="tabs">
         <button className={tab === "profile" ? "active" : ""} onClick={() => setTab("profile")}>Profil & Sicherheit</button>
+        <button className={tab === "appearance" ? "active" : ""} onClick={() => setTab("appearance")}>Darstellung</button>
         <button className={tab === "thresholds" ? "active" : ""} onClick={() => setTab("thresholds")}>Schwellenwerte</button>
         {user?.role === "admin" && <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}>Benutzer</button>}
         {user?.role === "admin" && <button className={tab === "admin" ? "active" : ""} onClick={() => setTab("admin")}>System</button>}
@@ -394,6 +498,7 @@ export default function Settings() {
           <Card title="Zwei-Faktor-Authentifizierung"><TotpSection /></Card>
         </div>
       )}
+      {tab === "appearance" && <AppearanceTab />}
       {tab === "thresholds" && <Card title="Schwellenwerte für die Statusanzeige"><ThresholdForm /></Card>}
       {tab === "users" && <Card title="Benutzerverwaltung"><UsersAdmin /></Card>}
       {tab === "admin" && <Card title="System, Backup & Diagnose"><SystemAdmin /></Card>}

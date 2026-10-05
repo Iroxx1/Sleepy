@@ -9,6 +9,7 @@ import { DeviceProvider } from "./hooks/useDevice";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import { Loading } from "./components/ui";
+import CustomStyles from "./components/CustomStyles";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Nights = lazy(() => import("./pages/Nights"));
@@ -21,6 +22,8 @@ const Devices = lazy(() => import("./pages/Devices"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Hardware = lazy(() => import("./pages/Hardware"));
+const Help = lazy(() => import("./pages/Help"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false } },
@@ -29,9 +32,16 @@ const queryClient = new QueryClient({
 function Gate() {
   const { loading, user } = useAuth();
   if (loading) return <Loading />;
-  if (!user) return <Login />;
+  if (!user)
+    return (
+      <>
+        <CustomStyles loggedIn={false} />
+        <Login />
+      </>
+    );
   return (
     <DeviceProvider>
+      <CustomStyles loggedIn />
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route element={<Layout />}>
@@ -43,6 +53,8 @@ function Gate() {
             <Route path="compare" element={<Compare />} />
             <Route path="import" element={<Import />} />
             <Route path="devices" element={<Devices />} />
+            <Route path="hardware" element={<Hardware />} />
+            <Route path="help" element={<Help />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />

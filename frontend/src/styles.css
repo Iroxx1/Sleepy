@@ -247,3 +247,15 @@ details > summary { cursor: pointer; }
 .obs-list { margin: 0; padding-left: 1.1rem; }
 .obs-list li { margin: 0.25rem 0; }
 .search-help { font-size: 0.8rem; }
+
+/* ---------- additions: help, hardware, theme */
+.kpi .label.has-help { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.theme-toggle { padding: 0.35rem 0.5rem; }
+.glossary { margin: 0; display: grid; gap: 0.15rem; }
+.glossary-row { display: grid; grid-template-columns: minmax(160px, 260px) 1fr; gap: 0.75rem; padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
+.glossary-row:last-child { border-bottom: none; }
+.glossary dt, .glossary dd { margin: 0; }
+@media (max-width: 640px) { .glossary-row { grid-template-columns: 1fr; gap: 0.15rem; } }
+kbd { font-family: ui-monospace, Menlo, monospace; font-size: 0.8em; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.3em; background: var(--surface-2); }
+.modal.wide { max-width: 860px; }
+textarea.code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; width: 100%; }

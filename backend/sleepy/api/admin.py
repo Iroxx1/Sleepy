@@ -90,6 +90,59 @@ def update_device(device_id: int, body: DeviceIn, user: User = Depends(current_u
     return device_full(db, d)
 
 
+@router.delete("/devices/{device_id}")
+def delete_device(
+    device_id: int,
+    request: Request,
+    confirm: str = Query(..., description="Seriennummer zur Bestätigung"),
+    delete_raw: bool = False,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a device with all its nights.  Original files stay in the archive
+    unless delete_raw=true (then only files no other device references)."""
+    import shutil
+
+    from sqlalchemy import delete as sql_delete
+    from sqlalchemy import update
+
+    from ..config import get_settings
+    from ..models import HardwareItem, ImportFile
+
+    d = _device(db, user, device_id)
+    if confirm != d.serial:
+        raise HTTPException(400, "Zur Bestätigung die Seriennummer des Geräts angeben.")
+    raw_ids = {r for (r,) in db.execute(select(DeviceFile.raw_file_id).where(DeviceFile.device_id == d.id))}
+    nights = db.scalar(select(func.count()).select_from(Night).where(Night.device_id == d.id))
+    db.execute(sql_delete(Night).where(Night.device_id == d.id))
+    db.execute(sql_delete(DeviceFile).where(DeviceFile.device_id == d.id))
+    db.execute(update(ImportFile).where(ImportFile.device_id == d.id).values(device_id=None))
+    db.execute(update(HardwareItem).where(HardwareItem.device_id == d.id).values(device_id=None))
+    serial = d.serial
+    db.delete(d)
+    db.commit()
+    shutil.rmtree(get_settings().signals_dir / str(device_id), ignore_errors=True)
+    removed_raw = 0
+    if delete_raw and raw_ids:
+        still = {r for (r,) in db.execute(select(DeviceFile.raw_file_id).where(DeviceFile.raw_file_id.in_(raw_ids)))}
+        for rid in raw_ids - still:
+            raw = db.get(RawFile, rid)
+            if raw is None:
+                continue
+            db.execute(update(ImportFile).where(ImportFile.raw_file_id == rid).values(raw_file_id=None))
+            p = storage.raw_abs_path(raw.storage_path)
+            try:
+                p.chmod(0o600)
+                p.unlink()
+            except OSError:
+                pass
+            db.delete(raw)
+            removed_raw += 1
+        db.commit()
+    audit(db, request, user, "device_deleted", serial=serial, nights=nights, raw_deleted=removed_raw)
+    return {"ok": True, "nights_deleted": nights, "raw_files_deleted": removed_raw}
+
+
 @router.get("/devices/{device_id}/settings-history")
 def settings_history(device_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Periods with identical device settings (changes over time)."""

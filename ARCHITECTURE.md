@@ -48,6 +48,8 @@ Weil Schicht 1 vollständig erhalten bleibt, kann nach jeder Parser-Verbesserung
 * `raw_files` (sha256, Größe, Archivpfad) · `imports` (Quelle, Status, Phase, Fortschritt, Statistik, Protokoll) · `import_files` · `device_files`
 * `nights` (Gerät, Therapietag, Start/Ende, Nutzungsdauer, Einstellungen, Tageszusammenfassung roh, Masken-Intervalle, Kanäle, Warnungen, Notizen)
 * `therapy_sessions` · `signal_segments` (Kanal, Label, Einheit, Abtastrate, Start, Samples, gain/offset, Ungültig-Wert, Min/Max/Mittel, Datei, Quelldatei) · `events` (Code, Originaltext, Roh-Onset, Start, Ende, Dauer, Quelldatei)
+* `hardware_items` (Kategorie, Bezeichnung, Hersteller/Modell/Größe/Seriennr., Startdatum, Enddatum, Austauschintervall, erwartete Laufzeit, optional verknüpftes Gerät) · `hardware_readings` (Datum, Art z. B. Turbinenstunden, Wert)
+* `app_settings` (u. a. globales CSS); persönliches CSS in den Benutzerpräferenzen
 * `night_metrics` (Schlüssel, Wert, Quelle) – Schlüsselschema `ahi`, `count.OA`, `<kanal>.<statistik>` (z. B. `leak.p95`)
 
 Zeitstempel sind „Wall-Clock-Millisekunden“: die lokale Gerätezeit, als UTC kodiert. Das Frontend formatiert konsequent in UTC und zeigt so exakt die Gerätezeit (Sommer-/Winterzeitwechsel werden nicht umgerechnet).

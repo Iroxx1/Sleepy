@@ -233,7 +233,7 @@ def totp_disable(body: DisableTotpIn, request: Request, user: User = Depends(cur
     return {"ok": True}
 
 
-ALLOWED_PREFS = {"theme", "thresholds", "default_device_id", "chart_channels", "chart_heights"}
+ALLOWED_PREFS = {"theme", "thresholds", "default_device_id", "chart_channels", "chart_heights"}  # custom_css: /api/appearance
 
 
 @router.get("/preferences")

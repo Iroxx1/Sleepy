@@ -1,5 +1,7 @@
 # Sleepy – self-hosted CPAP-Datenanalyse
 
+![Version](https://img.shields.io/badge/version-1.1.0-blue) ![Python](https://img.shields.io/badge/python-3.11%2B-blue) ![Self-hosted](https://img.shields.io/badge/self--hosted-100%25%20lokal-green)
+
 Sleepy ist eine vollständig lokal laufende Webanwendung, die die SD-Karten-Daten von PAP-Geräten importiert, unverändert archiviert, normalisiert und – ähnlich SleepHQ/OSCAR – detailliert auswertet: Nachtanalyse mit hochaufgelöstem Flow, synchronisierten Diagrammen und Ereignisnavigation, Kalender, Langzeittrends, Vergleiche, Berichte und Export.
 
 > **Hinweis:** Die dargestellten Informationen dienen ausschließlich der technischen Analyse der PAP-Therapiedaten und ersetzen keine ärztliche Beratung. Sleepy ist kein Medizinprodukt, stellt keine Diagnosen und gibt keine Therapieempfehlungen.
@@ -17,6 +19,9 @@ Sleepy ist eine vollständig lokal laufende Webanwendung, die die SD-Karten-Date
 | Diagramme | Flow (25 Hz), Druck, Leckage mit Schwelle, Ereignisspuren, Flusslimitierung, Schnarchen, Atmung, SpO2/Puls, weitere Kanäle; **synchronisierter Zoom/Pan**, Mausrad-Zoom, Bereichsauswahl, gemeinsamer Cursor mit Tooltip, Übersichtsleiste, Nachladen in voller Auflösung beim Zoomen |
 | Ereignisse | Liste mit Druck/Leck/FL zum Ereignis, Klick zoomt alle Diagramme, Cluster („Zwischen 02:15 und 02:40 …“), Ereignisse pro Stunde, ereignisbezogene Mittelung von Druck/Leck/FL |
 | Auswertung | Zusammenfassungstext, statistische Auffälligkeiten (robuste Abweichung vom persönlichen 30-Nächte-Median), Kalender mit Ampel (Schwellen einstellbar), Trends (7/30/90/180/365 Tage, alle, frei) mit Mittel/Median/Min/Max/Perzentilen/Std.-Abw./linearem Trend, Vergleich mehrerer Nächte inkl. Überlagerung, Suche (`ahi>5 event:CA 2026-09`) und Filter |
+| Hardware | Gerät, Masken, Polster, Schläuche, Filter, Wasserkammer mit Startdatum; eigenes Austauschintervall mit Erinnerung im Dashboard; „Ersetzen“ mit einem Klick (z. B. jährliche neue Maske); Turbinen-/Laufzeitstunden als Ablesungen mit Verlauf, Ø Stunden/Tag und optionaler Hochrechnung; Therapiestunden seit Start aus den Daten; Vorher/Nachher-Vergleich (Leckage, AHI …); Wechsel als Markierung in den Trends |
+| Darstellung | Hell/Dunkel/System (Mond-/Sonnen-Symbol oben rechts), eigenes CSS pro Benutzer und globales CSS (Admin) mit Beispielen und Variablenliste |
+| Hilfe | „Hilfe & Legende“: alle Abkürzungen (AHI, CAI, RERA, EPR, P95 …) auf Deutsch, durchsuchbar; Tooltips an den Kennzahlen; Bedienung der Diagramme und Suchsyntax |
 | Berichte & Export | Wochen-/Monats-/Zeitraumberichte als HTML, PDF, CSV, JSON; Export Nächte/Ereignisse (CSV, JSON, optional Parquet), Komplett-ZIP inkl. aller Zeitreihen, Originaldaten-ZIP |
 | Sicherheit | Login (Argon2id), serverseitige Sessions, CSRF, Rate Limiting, optionale TOTP-2FA, mehrere Benutzer mit Datentrennung, Admin-Rolle, Audit-Log, CSP & Sicherheitsheader, keine Telemetrie/CDNs/Webfonts |
 | Betrieb | `install.sh` für Debian-LXC, `update.sh`, Backup/Restore (inkl. täglichem Timer), Healthcheck, Diagnose, Logging, OpenAPI/Swagger offline, optional Docker/Podman |
@@ -83,7 +88,7 @@ Backups lassen sich auch unter *Einstellungen → System* erstellen und herunter
 
 Einfach immer die komplette Karte importieren: bekannte Dateien werden erkannt, neue Versionen (z. B. `STR.edf`) versioniert, betroffene Nächte neu berechnet. Kommandozeile: `sleepy import-dir /pfad/zur/kopie`.
 
-Demo ohne eigene Daten: `./scripts/generate-demo-data.sh 30 demo.zip` erzeugt **synthetische** Daten.
+**Ohne eigene Daten ausprobieren:** *Import → „Beispieldaten laden (synthetisch)“* erzeugt 60 künstliche Nächte als eigenes „Demo-Gerät“ (Seriennummer `DEMO00000001`). Später unter *Geräte → Gerät löschen* (Seriennummer zur Bestätigung eingeben, optional inkl. Originaldateien) wieder vollständig entfernen – danach die echte SD-Karte importieren. Alternativ als ZIP: `./scripts/generate-demo-data.sh 30 demo.zip`.
 
 ## Architektur & API
 

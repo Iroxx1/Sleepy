@@ -293,3 +293,43 @@ class AppSetting(Base):
     __tablename__ = "app_settings"
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[Any] = mapped_column(JSON)
+
+
+# ------------------------------------------------------------------ hardware
+class HardwareItem(Base):
+    """User maintained equipment: CPAP device, masks, tubes, filters, ..."""
+
+    __tablename__ = "hardware_items"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    category: Mapped[str] = mapped_column(String(32))  # device | mask | cushion | tube | filter | humidifier | other
+    name: Mapped[str] = mapped_column(String(128))
+    manufacturer: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    model: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    size: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    serial: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id", ondelete="SET NULL"), nullable=True)
+    started_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    ended_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    replace_after_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    expected_hours: Mapped[float | None] = mapped_column(Float, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    readings: Mapped[list[HardwareReading]] = relationship(
+        cascade="all, delete-orphan", passive_deletes=True, order_by="HardwareReading.read_on"
+    )
+
+
+class HardwareReading(Base):
+    """Manually recorded counter value, e.g. blower/turbine hours of the device."""
+
+    __tablename__ = "hardware_readings"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("hardware_items.id", ondelete="CASCADE"), index=True)
+    read_on: Mapped[date] = mapped_column(Date)
+    kind: Mapped[str] = mapped_column(String(32), default="blower_hours")  # blower_hours | device_hours | other
+    value: Mapped[float] = mapped_column(Float)
+    note: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

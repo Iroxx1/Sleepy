@@ -25,3 +25,12 @@ describe("format", () => {
     expect(fmtMetric(1.5, "h", 1)).toBe("1h 30m");
   });
 });
+
+import { explain } from "./glossary";
+describe("glossary", () => {
+  it("explains abbreviations", () => {
+    expect(explain("AHI")).toContain("Apnoe-Hypopnoe-Index");
+    expect(explain("CAI")).toContain("Zentral");
+    expect(explain("Völlig unbekannt")).toBeUndefined();
+  });
+});

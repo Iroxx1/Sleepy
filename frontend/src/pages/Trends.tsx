@@ -78,7 +78,14 @@ export function PeriodPicker({
   );
 }
 
-function TrendChart({ s, onClick }: { s: TrendSeries; onClick: (id: number) => void }) {
+export interface HwMarker {
+  date: string;
+  kind: "start" | "end";
+  name: string;
+  category_label: string;
+}
+
+function TrendChart({ s, onClick, markers }: { s: TrendSeries; onClick: (id: number) => void; markers?: HwMarker[] }) {
   const { resolved } = useTheme();
   const option = useMemo(() => {
     const t = chartTheme();
@@ -95,6 +102,17 @@ function TrendChart({ s, onClick }: { s: TrendSeries; onClick: (id: number) => v
         connectNulls: false,
       },
     ];
+    const idx = (d: string) => s.x.indexOf(d);
+    const marks = (markers || []).filter((m) => m.kind === "start" && idx(m.date) >= 0);
+    if (marks.length) {
+      (series[0] as Record<string, unknown>).markLine = {
+        silent: false,
+        symbol: "none",
+        lineStyle: { color: "#9333ea", type: "dashed", width: 1.5 },
+        label: { formatter: (p: { name: string }) => p.name, color: t.muted, fontSize: 10, position: "insideEndTop" },
+        data: marks.map((m) => ({ xAxis: idx(m.date), name: `${m.category_label}: ${m.name}` })),
+      };
+    }
     if (s.rolling7) {
       series.push({ name: "Ø 7 Tage", type: "line", data: s.rolling7.map((v) => (v == null ? null : +v.toFixed(3))), showSymbol: false, lineStyle: { width: 2, color: t.text, opacity: 0.6 }, itemStyle: { color: t.text } });
     }
@@ -119,7 +137,7 @@ function TrendChart({ s, onClick }: { s: TrendSeries; onClick: (id: number) => v
       series,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s, resolved]);
+  }, [s, resolved, markers]);
   return (
     <EChart
       option={option}
@@ -168,6 +186,7 @@ export default function Trends() {
       }),
     enabled: metrics.length > 0 && (preset !== "custom" || (!!from && !!to)),
   });
+  const markers = useQuery({ queryKey: ["hw-timeline"], queryFn: () => api.get<HwMarker[]>("/api/hardware/timeline") });
   const types = useQuery({ queryKey: ["event-types"], queryFn: () => api.get<Record<string, EventType>>("/api/events/types") });
 
   function toggleMetric(k: string) {
@@ -310,6 +329,9 @@ export default function Trends() {
             </label>
           ))}
         </div>
+        {(markers.data || []).some((m) => m.kind === "start") && bucket === "day" && (
+          <p className="muted small">Lila gestrichelte Linien: Beginn neuer Hardware (z. B. neue Maske) laut Bereich „Hardware“.</p>
+        )}
         {bucket !== "day" && <p className="muted small">Langer Zeitraum: Werte als {bucket === "week" ? "Wochen" : "Monats"}-Mittel mit Min/Max (aggregiert).</p>}
         <ErrorBox error={tq.error} />
         {tq.isLoading && <Loading />}
@@ -324,7 +346,7 @@ export default function Trends() {
                   {ser.label}
                   {ser.trend && ser.trend.direction !== "stabil" && <span className="badge info" style={{ marginLeft: 8 }}>{ser.trend.direction}</span>}
                 </h3>
-                {hasData ? <TrendChart s={ser} onClick={(id) => nav(`/nights/${id}`)} /> : <p className="muted">Keine Daten für diese Kennzahl verfügbar.</p>}
+                {hasData ? <TrendChart s={ser} markers={markers.data} onClick={(id) => nav(`/nights/${id}`)} /> : <p className="muted">Keine Daten für diese Kennzahl verfügbar.</p>}
               </div>
             );
           })}

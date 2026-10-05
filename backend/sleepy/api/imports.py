@@ -77,6 +77,22 @@ def create(body: CreateIn, request: Request, user: User = Depends(current_user),
     return import_out(imp)
 
 
+class DemoIn(BaseModel):
+    nights: int = 60
+    oximetry: bool = False
+
+
+@router.post("/demo")
+def demo_import(body: DemoIn, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Generate and import a SYNTHETIC ResMed card (device serial DEMO00000001)."""
+    n = max(3, min(body.nights, 365))
+    imp = create_import(db, user, "demo", f"Beispieldaten ({n} Nächte, synthetisch)",
+                        {"nights": n, "oximetry": body.oximetry})
+    audit(db, request, user, "demo_import", import_id=imp.id, nights=n)
+    worker.enqueue(imp.id)
+    return import_out(db.get(Import, imp.id))
+
+
 @router.put("/{import_id}/upload")
 async def upload_zip(
     import_id: str,
@@ -248,7 +264,7 @@ def retry(import_id: str, request: Request, user: User = Depends(current_user), 
     if imp.status in ("running", "queued"):
         raise HTTPException(409, "Import läuft bereits")
     stage = staging_path(imp.id)
-    if imp.source in ("zip", "folder") and stage.exists() and any(stage.iterdir()):
+    if imp.source in ("zip", "folder", "demo") and stage.exists() and any(stage.iterdir()):
         db.execute(delete(ImportFile).where(ImportFile.import_id == imp.id))
         imp.log = list(imp.log or []) + [{"t": "", "level": "info", "text": "— Erneuter Versuch —"}]
         db.commit()

@@ -227,6 +227,16 @@ export default function Import() {
     }
   }
 
+  async function demo() {
+    setError(null);
+    if (!confirm("60 Nächte synthetische Beispieldaten erzeugen? Sie erscheinen als eigenes „Demo-Gerät“ und lassen sich unter Geräte wieder vollständig löschen.")) return;
+    try {
+      setCurrent(await api.post<ImportInfo>("/api/imports/demo", { nights: 60 }));
+    } catch (e) {
+      setError(e);
+    }
+  }
+
   async function retry(id: string) {
     setError(null);
     try {
@@ -283,6 +293,12 @@ export default function Import() {
                 {server.data.auto_scan_minutes > 0 && ` (automatische Prüfung alle ${server.data.auto_scan_minutes} min)`}
               </>
             )}
+          </p>
+          <p className="small" style={{ marginBottom: 0 }}>
+            Noch keine eigenen Daten zur Hand?{" "}
+            <button className="small" disabled={!!running} onClick={demo}>
+              Beispieldaten laden (synthetisch)
+            </button>
           </p>
           <input ref={zipInput} type="file" accept=".zip,application/zip" hidden onChange={(e) => e.target.files?.[0] && startZip(e.target.files[0])} />
           <input ref={dirInput} type="file" multiple hidden onChange={(e) => e.target.files && startFolder(e.target.files)} />
@@ -370,7 +386,7 @@ export default function Import() {
                 <tr key={i.id}>
                   <td className="nowrap">{dateTimeDe(i.created_at)}</td>
                   <td className="small">
-                    {{ zip: "ZIP", folder: "Ordner", server_dir: "Server", reprocess: "Neuberechnung" }[i.source] ?? i.source}
+                    {{ zip: "ZIP", folder: "Ordner", server_dir: "Server", reprocess: "Neuberechnung", demo: "Beispieldaten" }[i.source] ?? i.source}
                     {i.original_name && <span className="muted"> · {i.original_name}</span>}
                   </td>
                   <td>

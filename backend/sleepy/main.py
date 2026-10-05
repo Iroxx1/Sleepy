@@ -15,7 +15,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from cpap_parser.channels import CHANNELS, EVENTS
 
 from . import __version__
-from .api import admin, auth, exports, imports, nights, reports, statistics
+from .api import admin, appearance, auth, exports, hardware, imports, nights, reports, statistics
 from .api.deps import UNSAFE, current_user
 from .config import get_settings
 from .db import init_db
@@ -102,7 +102,7 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(SecurityMiddleware)
 
-    for r in (auth, imports, nights, statistics, reports, exports, admin):
+    for r in (auth, imports, nights, statistics, reports, exports, admin, hardware, appearance):
         app.include_router(r.router)
 
     @app.get("/api/channels", tags=["nights"])

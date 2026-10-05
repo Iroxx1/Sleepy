@@ -67,6 +67,22 @@ function DeviceCard({ d }: { d: Device }) {
         <a className="btn small" href={`/api/export/raw.zip?device_id=${d.id}`}>
           Originaldaten (ZIP)
         </a>
+        <button
+          className="small danger"
+          onClick={async () => {
+            const s = prompt(`Gerät mit allen ${d.nights ?? 0} Nächten löschen?\nZur Bestätigung die Seriennummer eingeben: ${d.serial}`);
+            if (s === null) return;
+            const raw = confirm("Auch die archivierten Originaldateien dieses Geräts löschen?\n(OK = ja, Abbrechen = Originaldateien behalten)");
+            try {
+              await api.del(`/api/devices/${d.id}?confirm=${encodeURIComponent(s)}&delete_raw=${raw}`);
+              qc.invalidateQueries();
+            } catch (e) {
+              alert(e instanceof Error ? e.message : String(e));
+            }
+          }}
+        >
+          Gerät löschen
+        </button>
         {reprocess.isSuccess && <span className="small muted">Neuberechnung gestartet (siehe Import-Verlauf)</span>}
       </div>
       {ident && (
