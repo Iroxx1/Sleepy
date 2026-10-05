@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+// set by CI: -PsleepyVersionCode=<run number> -PsleepyVersionName=<x.y.z>
+def sleepyVersionCode = Integer.parseInt((project.findProperty("sleepyVersionCode") ?: "1").toString())
+def sleepyVersionName = (project.findProperty("sleepyVersionName") ?: "1.2.0").toString()
+
 android {
     namespace = "io.github.iroxx1.sleepy"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,9 +11,8 @@ android {
         applicationId "io.github.iroxx1.sleepy"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // set by CI: -PsleepyVersionCode=<run number> -PsleepyVersionName=<x.y.z>
-        versionCode (project.findProperty("sleepyVersionCode") ?: "1") as Integer
-        versionName (project.findProperty("sleepyVersionName") ?: "1.2.0")
+        versionCode sleepyVersionCode
+        versionName sleepyVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
