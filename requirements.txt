@@ -1,0 +1,4 @@
+# Pinned minimum versions are declared in backend/pyproject.toml.
+# This file installs both local packages for production use:
+./parser
+./backend

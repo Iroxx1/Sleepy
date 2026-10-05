@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ rep.title }}</title>
+<style>
+  :root { --fg:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --bg:#ffffff; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg);
+         margin: 0 auto; max-width: 960px; padding: 24px 16px; line-height: 1.45; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 28px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+  .kpi { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .kpi .v { font-size: 1.35rem; font-weight: 600; }
+  .kpi .l { color: var(--muted); font-size: .8rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+  th, td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f9fafb; font-weight: 600; }
+  .st { display:inline-block; width:10px; height:10px; border-radius:50%; }
+  .green{background:#16a34a}.yellow{background:#eab308}.red{background:#dc2626}.none{background:#d1d5db}
+  ul { padding-left: 20px; }
+  .disclaimer { margin-top: 32px; padding: 12px; border: 1px solid #f59e0b; background: #fffbeb; border-radius: 8px; font-size: .85rem; }
+  .table-wrap { overflow-x: auto; }
+  @media print { body { padding: 0; } h2 { break-after: avoid; } .kpi, table { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<h1>{{ rep.title }}</h1>
+<div class="muted">Zeitraum {{ de(rep['from']) }} – {{ de(rep['to']) }} · erstellt {{ rep.generated.replace('T', ' ') }} · Benutzer {{ rep.user }}{% if rep.device %} · Gerät {{ rep.device.model }} ({{ rep.device.serial }}){% endif %}</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">{{ rep.summary.compliance.nights_with_data }}/{{ rep.summary.compliance.days }}</div><div class="l">Nächte mit Daten</div></div>
+  {% set s = rep.summary.stats %}
+  {% if s.usage_h %}<div class="kpi"><div class="v">{{ hm(s.usage_h.mean) }}</div><div class="l">Ø Nutzungsdauer</div></div>{% endif %}
+  {% if s.ahi %}<div class="kpi"><div class="v">{{ f(s.ahi.mean, 2) }}</div><div class="l">Ø AHI (Median {{ f(s.ahi.median, 2) }})</div></div>{% endif %}
+  {% if s['leak.p95'] %}<div class="kpi"><div class="v">{{ f(s['leak.p95'].mean, 1) }}</div><div class="l">Ø Leckage 95 % (L/min)</div></div>{% endif %}
+  {% if s['pressure.p95'] %}<div class="kpi"><div class="v">{{ f(s['pressure.p95'].mean, 1) }}</div><div class="l">Ø Druck 95 % (cmH2O)</div></div>{% endif %}
+  <div class="kpi"><div class="v">{{ f(rep.summary.compliance.pct_ge_4h, 0) }} %</div><div class="l">Tage mit ≥ 4 h</div></div>
+</div>
+
+<h2>Zusammenfassung</h2>
+<ul>{% for h in rep.highlights %}<li>{{ h }}</li>{% endfor %}</ul>
+
+{% if charts.ahi %}<h2>AHI je Nacht</h2>{{ charts.ahi | safe }}{% endif %}
+{% if charts.usage %}<h2>Nutzungsdauer je Nacht (h)</h2>{{ charts.usage | safe }}{% endif %}
+{% if charts.leak %}<h2>Leckage 95 % je Nacht (L/min)</h2>{{ charts.leak | safe }}{% endif %}
+
+<h2>Statistik</h2>
+<div class="table-wrap"><table>
+<tr><th>Kennzahl</th><th>n</th><th>Mittel</th><th>Median</th><th>Min</th><th>Max</th><th>Std.-Abw.</th><th>95 %</th><th>Vorperiode Ø</th></tr>
+{% for k, v in rep.summary.stats.items() %}
+<tr><td>{{ v.label }}{% if v.unit %} ({{ v.unit }}){% endif %}</td><td>{{ v.n }}</td><td>{{ f(v.mean, v.decimals) }}</td><td>{{ f(v.median, v.decimals) }}</td><td>{{ f(v.min, v.decimals) }}</td><td>{{ f(v.max, v.decimals) }}</td><td>{{ f(v.std, v.decimals) }}</td><td>{{ f(v.p95, v.decimals) }}</td><td>{{ f(rep.previous.stats[k].mean, v.decimals) if rep.previous.stats[k] else '–' }}</td></tr>
+{% endfor %}
+</table></div>
+
+{% if rep.summary.event_totals %}
+<h2>Ereignisse</h2>
+<div class="table-wrap"><table><tr><th>Typ</th><th>Anzahl</th></tr>
+{% for code, n in rep.summary.event_totals.items() %}<tr><td>{{ event_names.get(code, code) }}</td><td>{{ n }}</td></tr>{% endfor %}
+</table></div>
+{% endif %}
+
+{% if rep.anomalies %}
+<h2>Statistische Auffälligkeiten</h2>
+<ul>{% for a in rep.anomalies %}<li>{{ de(a.date) }}: {{ a.text }}</li>{% endfor %}</ul>
+{% endif %}
+
+<h2>Nächte</h2>
+<div class="table-wrap"><table>
+<tr><th>Datum</th><th></th>{% for k, l in columns[1:] %}<th>{{ l }}</th>{% endfor %}</tr>
+{% for r in rep.nights %}
+<tr><td>{{ de(r.date) }}</td><td><span class="st {{ r.status }}"></span></td>{% for k, l in columns[1:] %}<td>{{ f(r.all_metrics.get(k), 2) }}</td>{% endfor %}</tr>
+{% endfor %}
+</table></div>
+
+<div class="disclaimer"><strong>Hinweis:</strong> {{ rep.disclaimer }} Statistische Auffälligkeiten beschreiben Abweichungen von deinen eigenen bisherigen Werten und sind keine medizinische Bewertung.</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local data / secrets – never commit personal CPAP data
+.env
+*.env
+!.env.example
+data/
+/var/
+*.db
+*.db-wal
+*.db-shm
+sdcard/
+*.edf
+*.edf.gz
+*.zip
+backups/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+.DS_Store

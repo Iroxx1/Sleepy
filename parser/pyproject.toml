@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sleepy-cpap-parser"
+version = "1.0.0"
+description = "Modulare Parser für CPAP/PAP-SD-Karten (ResMed EDF/EDF+)"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26"]
+
+[tool.setuptools.packages.find]
+include = ["cpap_parser*"]
