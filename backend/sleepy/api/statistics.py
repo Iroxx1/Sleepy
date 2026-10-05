@@ -256,6 +256,12 @@ def dashboard(device_id: int | None = None, user: User = Depends(current_user), 
     disp = display_metrics(mm.get(last_night.id, {"device": {}, "computed": {}}))
     hist, n_hist = history_metrics(db, user, last_night.device_id, last_night.date, 30)
     units = {k: metric_info(k)["unit"] for k in disp}
+    last_events = [
+        ins.Ev(c, s, e, d)
+        for c, s, e, d in db.execute(
+            select(Event.code, Event.start_ms, Event.end_ms, Event.duration_s).where(Event.night_id == last_night.id)
+        )
+    ]
 
     def agg(days: int) -> dict:
         d0 = last - timedelta(days=days - 1)
@@ -280,7 +286,7 @@ def dashboard(device_id: int | None = None, user: User = Depends(current_user), 
             **last_row,
             "all_metrics": disp,
             "summary": ins.summary_text(
-                disp, {k: sum(v) / len(v) for k, v in hist.items() if v}, n_hist, last_night.session_count, [],
+                disp, {k: sum(v) / len(v) for k, v in hist.items() if v}, n_hist, last_night.session_count, last_events,
                 th["leak_p95_max"], last_night.start_ms, last_night.end_ms,
             ),
             "anomalies": ins.anomalies(disp, hist, units),

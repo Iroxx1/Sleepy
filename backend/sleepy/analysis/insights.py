@@ -355,7 +355,7 @@ def summary_text(
             f"Die meisten Ereignisse traten zwischen {hhmm(best['start_ms'])} und "
             f"{hhmm(best['start_ms'] + 3600000)} Uhr auf."
         )
-    elif ahi_evs == [] and ahi is not None:
+    elif not ahi_evs and ahi is not None and ahi == 0 and m.get("count.OA") is not None:
         parts.append("Es wurden keine Apnoen oder Hypopnoen aufgezeichnet.")
     if "spo2.median" in m:
         parts.append(f"SpO2 Median {fmt(m['spo2.median'], 0)} %.")
