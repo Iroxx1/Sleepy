@@ -56,6 +56,12 @@ STAGES = {
 }
 
 
+STAT_KEYS = (
+    "files_total", "files_new", "files_updated", "files_duplicate", "files_ignored", "files_error",
+    "nights_created", "nights_updated", "nights_unchanged", "nights_failed", "devices_new",
+)
+
+
 class ImportAbort(Exception):
     """User-facing import failure."""
 
@@ -113,6 +119,8 @@ class Runner:
         imp.started_at = utcnow()
         imp.error = None
         self.stats = defaultdict(int)
+        for k in STAT_KEYS:
+            self.stats[k] = 0
         self.flush()
         try:
             if self.mode == "reprocess":
