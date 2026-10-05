@@ -389,3 +389,69 @@ def night_status(m: dict[str, float], has_data: bool, thresholds: dict | None = 
     if leak is not None and leak > th["leak_p95_max"]:
         yellow = True
     return "yellow" if yellow else "green"
+
+
+# ------------------------------------------------------------ short summary
+SHORT_SUMMARY_MAX = 200
+
+
+def short_summary(rows: Sequence[dict], last_date, thresholds: dict, days: int = 7) -> str:
+    """Very short (≤ 200 characters) data-only summary of the last *days* days.
+
+    *rows* are night rows (``repo.night_row``) of at least the last 2×days days.
+    Parts are added by priority as long as the text stays within the limit.
+    """
+    from datetime import timedelta
+
+    d0 = (last_date - timedelta(days=days - 1)).isoformat()
+    p0 = (last_date - timedelta(days=2 * days - 1)).isoformat()
+    cur = [r for r in rows if r["date"] >= d0 and r.get("usage_h")]
+    prev = [r for r in rows if p0 <= r["date"] < d0 and r.get("usage_h")]
+    if not cur:
+        return f"In den letzten {days} Tagen wurden keine Therapiedaten aufgezeichnet."
+
+    def mean(vals):
+        vals = [v for v in vals if v is not None]
+        return sum(vals) / len(vals) if vals else None
+
+    n = len(cur)
+    usage = mean([r["usage_h"] for r in cur])
+    head = f"Letzte {days} Tage: {n} {'Nacht' if n == 1 else 'Nächte'}, Ø {duration_hm(usage).replace(' h', '')} h"
+    ahi = mean([r["metrics"].get("ahi") for r in cur])
+    if ahi is not None:
+        head += f", AHI Ø {fmt(ahi, 1)}"
+        pahi = mean([r["metrics"].get("ahi") for r in prev])
+        if pahi is not None and abs(ahi - pahi) >= 0.5:
+            head += f" (Vorwoche {fmt(pahi, 1)})"
+    parts = [head + "."]
+
+    optional: list[str] = []
+    yellow = sum(1 for r in cur if r["status"] == "yellow")
+    red = sum(1 for r in cur if r["status"] == "red")
+    if yellow == 0 and red == 0:
+        optional.append("Alle Nächte im grünen Bereich.")
+    else:
+        bits = []
+        if red:
+            bits.append(f"{red} rot")
+        if yellow:
+            bits.append(f"{yellow} gelb")
+        optional.append(f"Ampel: {', '.join(bits)}.")
+    leak_th = thresholds.get("leak_p95_max", 24)
+    leak_nights = [r for r in cur if (r["metrics"].get("leak.p95") or 0) > leak_th]
+    if any(r["metrics"].get("leak.p95") is not None for r in cur):
+        optional.append(
+            "Leckage unauffällig." if not leak_nights
+            else f"Leckage in {len(leak_nights)} {'Nacht' if len(leak_nights) == 1 else 'Nächten'} erhöht."
+        )
+    short = [r for r in cur if r["usage_h"] < thresholds.get("usage_min_h", 4)]
+    if short:
+        optional.append(f"{len(short)}× unter {fmt(thresholds.get('usage_min_h', 4), 0)} h genutzt.")
+    if n < days:
+        optional.append(f"{days - n} {'Tag' if days - n == 1 else 'Tage'} ohne Daten.")
+
+    text = parts[0]
+    for o in optional:
+        if len(text) + 1 + len(o) <= SHORT_SUMMARY_MAX:
+            text += " " + o
+    return text[:SHORT_SUMMARY_MAX]

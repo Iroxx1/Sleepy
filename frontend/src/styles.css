@@ -259,3 +259,4 @@ details > summary { cursor: pointer; }
 kbd { font-family: ui-monospace, Menlo, monospace; font-size: 0.8em; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.3em; background: var(--surface-2); }
 .modal.wide { max-width: 860px; }
 textarea.code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; width: 100%; }
+.short-summary { background: var(--primary-soft); color: var(--text); border-left: 4px solid var(--primary); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.7rem 1rem; font-size: 1.05rem; font-weight: 500; }

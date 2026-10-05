@@ -114,6 +114,7 @@ def test_dashboard(api, imported):
     d = api.get("/api/dashboard").json()
     assert not d["empty"] and d["last_night"]["date"] == "2026-09-04"
     assert d["agg7"]["nights"] == 4 and len(d["recent"]) == 4
+    assert d["short_summary"].startswith("Letzte 7 Tage: 4 Nächte") and len(d["short_summary"]) <= 200
 
 
 def test_dashboard_empty(api):

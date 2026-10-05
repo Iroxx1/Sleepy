@@ -86,3 +86,23 @@ def test_query_parser():
         parse_query("event:XYZ")
     with pytest.raises(QueryError):
         parse_query("hallo")
+
+
+def _row(d, usage, ahi, leak=3.0, status="green"):
+    return {"date": d, "usage_h": usage, "status": status, "metrics": {"ahi": ahi, "leak.p95": leak}}
+
+
+def test_short_summary():
+    th = {"leak_p95_max": 24, "usage_min_h": 4}
+    rows = [_row(f"2026-09-{d:02d}", 7.5, 2.0) for d in range(24, 31)]
+    rows += [_row(f"2026-09-{d:02d}", 7.0, 4.0) for d in range(17, 24)]
+    t = ins.short_summary(rows, date(2026, 9, 30), th)
+    assert t.startswith("Letzte 7 Tage: 7 Nächte, Ø 7:30 h, AHI Ø 2,0 (Vorwoche 4,0).")
+    assert "Alle Nächte im grünen Bereich." in t and "Leckage unauffällig." in t
+    assert len(t) <= 200
+    rows2 = [_row("2026-09-30", 3.0, 12.0, leak=30, status="red"), _row("2026-09-29", 6.0, 6.0, status="yellow")]
+    t2 = ins.short_summary(rows2, date(2026, 9, 30), th)
+    assert "Ampel: 1 rot, 1 gelb." in t2 and "Leckage in 1 Nacht erhöht." in t2
+    assert "1× unter 4 h genutzt." in t2 and "5 Tage ohne Daten." in t2 and len(t2) <= 200
+    assert "keine Therapiedaten" in ins.short_summary([], date(2026, 9, 30), th)
+    assert "Diagnose" not in t + t2

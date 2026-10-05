@@ -87,6 +87,11 @@ export default function Dashboard() {
   const m = ln.all_metrics;
   return (
     <div className="stack">
+      {d.short_summary && (
+        <div className="short-summary" role="status" aria-label="Kurz-Zusammenfassung">
+          {d.short_summary}
+        </div>
+      )}
       <Card
         title={
           <div className="row">

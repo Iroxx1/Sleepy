@@ -264,6 +264,7 @@ export interface ImportInfo {
 
 export interface Dashboard {
   empty: boolean;
+  short_summary?: string;
   last_night?: NightRow & { all_metrics: Record<string, number>; summary: string; anomalies: Anomaly[] };
   agg7?: Agg;
   agg30?: Agg;
